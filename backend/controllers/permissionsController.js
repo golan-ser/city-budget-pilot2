@@ -1,22 +1,27 @@
-import pg from 'pg';
-const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import pool from '../db.js';
 
 export const getAllPermissions = async (req, res) => {
-  const result = await pool.query('SELECT * FROM permissions ORDER BY id DESC');
-  res.json(result.rows);
+  try {
+    const result = await pool.query('SELECT * FROM permissions ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('❌ Error fetching permissions:', error);
+    res.status(500).json({ error: 'Failed to fetch permissions' });
+  }
 };
 
 export const getPermissionsById = async (req, res) => {
   const { id } = req.params;
-  const result = await pool.query('SELECT * FROM permissions WHERE id = $1', [id]);
-  if (result.rows.length === 0) {
-    return res.status(404).json({ error: 'Permissions not found' });
+  try {
+    const result = await pool.query('SELECT * FROM permissions WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Permission not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Error fetching permission:', error);
+    res.status(500).json({ error: 'Failed to fetch permission' });
   }
-  res.json(result.rows[0]);
 };
 
 export const createPermissions = async (req, res) => {
@@ -31,6 +36,11 @@ export const updatePermissions = async (req, res) => {
 
 export const deletePermissions = async (req, res) => {
   const { id } = req.params;
-  await pool.query('DELETE FROM permissions WHERE id = $1', [id]);
-  res.status(204).send();
+  try {
+    await pool.query('DELETE FROM permissions WHERE id = $1', [id]);
+    res.status(204).send();
+  } catch (error) {
+    console.error('❌ Error deleting permission:', error);
+    res.status(500).json({ error: 'Failed to delete permission' });
+  }
 };

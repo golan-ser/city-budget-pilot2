@@ -9,6 +9,7 @@ import {
 
 const router = express.Router();
 
+// נתיבי API לפרויקטים
 router.get('/', getAllProjects);
 router.get('/:id', getProjectsById);
 router.post('/', createProjects);

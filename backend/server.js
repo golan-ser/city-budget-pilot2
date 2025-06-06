@@ -1,4 +1,3 @@
-
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -10,6 +9,7 @@ import milestoneRoutes from './routes/milestonesRoutes.js';
 import commentRoutes from './routes/commentsRoutes.js';
 import permissionRoutes from './routes/permissionsRoutes.js';
 import fundingRoutes from './routes/fundingRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -26,6 +26,7 @@ app.use('/api/milestones', milestoneRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/funding', fundingRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ברירת מחדל
 app.get('/', (req, res) => {
