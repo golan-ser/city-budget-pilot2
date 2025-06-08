@@ -1,13 +1,13 @@
-
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
+import { Routes, Route, useLocation } from "react-router-dom"
 import Dashboard from "./Dashboard"
-import Reports from "./Reports" 
+import Reports from "./Reports"
 import Projects from "./Projects"
 import Analytics from "./Analytics"
 import Admin from "./Admin"
+import Tabarim from "./Tabarim" // <--- ייבוא מסך תב"רים
 
 function AppContent() {
   const location = useLocation()
@@ -19,6 +19,7 @@ function AppContent() {
       case '/projects': return 'ניהול פרויקטים'
       case '/analytics': return 'דוחות'
       case '/admin': return 'ניהול מערכת'
+      case '/tabarim': return 'תב"רים' // <--- כותרת מותאמת לנתיב החדש
       default: return 'מערכת תב"ר'
     }
   }
@@ -52,6 +53,7 @@ function AppContent() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/tabarim" element={<Tabarim />} /> {/* <--- כאן הוספנו את דף תב"רים */}
             </Routes>
           </div>
         </main>

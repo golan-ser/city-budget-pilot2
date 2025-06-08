@@ -1,48 +1,39 @@
+-- דוגמת תב"ר
+INSERT INTO tabarim (year, tabar_number, name, ministry, total_authorized, municipal_participation, additional_funders, open_date, status)
+VALUES
+  (2024, 101, 'הרחבת גן ילדים', 'משרד החינוך', 800000, 200000, 'תרומות פרטיות', '2024-01-10', 'פעיל'),
+  (2023, 202, 'שדרוג כבישים', 'משרד התחבורה', 1200000, 500000, 'קרן ממשלתית', '2023-08-15', 'סגור');
 
--- נתוני דוגמה לטבלת projects
-INSERT INTO projects (name, type, department_id, start_date, end_date, budget_amount, status)
-VALUES 
-('שדרוג תשתיות מים', 'תבר', 1, '2024-01-01', '2025-01-01', 1500000, 'מאושר'),
-('הקמת מרכז צעירים', 'קול קורא', 2, '2024-03-15', '2025-06-30', 950000, 'בביצוע');
+-- סעיפי תב"ר לדוגמה
+INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
+VALUES
+  (1, 'בינוי', '201-22-001', 'קירות ותשתית', 400000, 'קבלן: ע.ב.ד. עבודות'),
+  (1, 'ציוד', '201-22-002', 'ציוד משחקים', 80000, NULL),
+  (2, 'סלילה', '302-11-013', 'אספלט ואבנים משתלבות', 900000, 'כולל תאורה');
 
--- נתוני דוגמה לטבלת reports
-INSERT INTO reports (project_id, report_date, status, notes, created_by)
-VALUES 
-(1, '2024-06-01', 'טיוטה', 'דיווח ראשון לשדרוג מים', 10),
-(2, '2024-06-05', 'בבדיקה', 'דיווח פתיחה למרכז צעירים', 11);
+-- תנועות כספיות לדוגמה
+INSERT INTO tabar_transactions (tabar_id, item_id, transaction_type, transaction_date, order_number, amount, direction, status, description)
+VALUES
+  (1, 1, 'חשבונית', '2024-02-01', 'INV-455', 150000, 'חיוב', 'שולם', 'עבור עבודות תשתית'),
+  (2, 3, 'תשלום', '2023-10-10', 'PAY-390', 500000, 'כניסה', 'שולם', 'השתתפות עירייה');
 
--- נתוני דוגמה לטבלת documents
-INSERT INTO documents (report_id, file_name, file_path, uploaded_by)
-VALUES 
-(1, 'report1.pdf', '/uploads/report1.pdf', 10),
-(2, 'report2.pdf', '/uploads/report2.pdf', 11);
+-- הרשאות/אישורים לדוגמה
+INSERT INTO tabar_permissions (tabar_id, permission_number, ministry, amount, start_date, end_date, document_url)
+VALUES
+  (1, '2024/456/12', 'משרד החינוך', 600000, '2024-01-01', '2025-01-01', '/uploads/permission1.pdf'),
+  (2, '2023/783/01', 'משרד התחבורה', 1200000, '2023-08-01', '2024-06-01', '/uploads/permission2.pdf');
 
--- נתוני דוגמה לטבלת milestones
-INSERT INTO milestones (project_id, title, due_date, status, description)
-VALUES 
-(1, 'תחילת ביצוע', '2024-07-01', 'לא התחיל', 'בדיקת קווים'),
-(2, 'אישור תוכניות', '2024-08-15', 'הושלם', 'אישור מול משרד ממשלתי');
+-- מקורות מימון לדוגמה
+INSERT INTO tabar_funding (tabar_id, funder_name, amount, percent, notes)
+VALUES
+  (1, 'עיריית מצפה מנות', 200000, 25, 'תקציב עירוני'),
+  (1, 'תרומות פרטיות', 100000, 12.5, NULL),
+  (1, 'משרד החינוך', 500000, 62.5, NULL),
+  (2, 'משרד התחבורה', 1200000, 70, NULL),
+  (2, 'קרן ממשלתית', 500000, 30, NULL);
 
--- נתוני דוגמה לטבלת comments
-INSERT INTO comments (report_id, user_id, comment)
-VALUES 
-(1, 12, 'נא להוסיף מסמך תקציב'),
-(2, 13, 'מאושר. יש לעדכן סטטוס.');
-
--- נתוני דוגמה לטבלת alerts
-INSERT INTO alerts (project_id, message, alert_date, alert_type)
-VALUES 
-(1, 'הרשאה עומדת לפוג בעוד 30 יום', '2024-07-01', 'התראה'),
-(2, 'נדרש דיווח חדש למשרד', '2024-07-10', 'התראה');
-
--- נתוני דוגמה לטבלת permissions
-INSERT INTO permissions (project_id, year, ministry, amount, valid_until)
-VALUES 
-(1, 2024, 'משרד הפנים', 1000000, '2024-12-31'),
-(2, 2024, 'משרד הרווחה', 800000, '2025-03-31');
-
--- נתוני דוגמה לטבלת funding_sources
-INSERT INTO funding_sources (project_id, source_name, amount)
-VALUES 
-(1, 'קק"ל', 400000),
-(2, 'קרן אריסון', 300000);
+-- מסמכים כלליים לדוגמה
+INSERT INTO tabar_documents (tabar_id, description, file_url, uploaded_at)
+VALUES
+  (1, 'סיכום ישיבת תקציב', '/uploads/meeting1.pdf', '2024-02-15'),
+  (2, 'צילום מצב התקדמות', '/uploads/photo1.jpg', '2023-09-20');

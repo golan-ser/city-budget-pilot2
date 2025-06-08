@@ -1,10 +1,9 @@
-
 import { useState } from "react"
 import { 
   BarChart3, 
   FileText, 
   Folder, 
-  Plus, 
+  Plus,   // <-- משתמש באייקון Plus עבור תב"רים
   Search, 
   Settings 
 } from "lucide-react"
@@ -28,6 +27,7 @@ const items = [
   { title: "דיווחים", url: "/reports", icon: FileText },
   { title: "ניהול פרויקטים", url: "/projects", icon: Folder },
   { title: "דוחות", url: "/analytics", icon: Search },
+  { title: "תב\"רים", url: "/tabarim", icon: Plus },      // <-- הוספת תב"רים!
   { title: "ניהול מערכת", url: "/admin", icon: Settings },
 ]
 

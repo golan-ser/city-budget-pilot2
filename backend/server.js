@@ -11,6 +11,9 @@ import permissionRoutes from './routes/permissionsRoutes.js';
 import fundingRoutes from './routes/fundingRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 
+// 👇 הוסף כאן
+import tabarimRoutes from './routes/tabarimRoutes.js';
+
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,6 +30,9 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/funding', fundingRoutes);
 app.use('/api/analytics', analyticsRoutes);
+
+// 👇 זה מה שמוסיף את ה־API החדש
+app.use('/api/tabarim', tabarimRoutes);
 
 // ברירת מחדל
 app.get('/', (req, res) => {
