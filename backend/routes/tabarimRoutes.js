@@ -13,30 +13,47 @@ import { extractTextFromPdf } from '../util/pdfOcr.js';
 import { parsePermissionText } from '../util/parsePermissionText.js';
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+
+// הגדרת multer עם אחסון בקבצים
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
 
 // שליפת כל התב"רים
 router.get('/', getAllTabarim);
 
-// שליפת תב"ר בודד (כולל סעיפים, תנועות, הרשאות, מימון, מסמכים)
+// שליפת תב"ר בודד
 router.get('/:id', getTabarDetails);
 
 // יצירת תב"ר חדש
-router.post('/', createTabar);
+router.post('/', upload.none(), createTabar);
 
 // עדכון תב"ר קיים
-router.put('/:id', updateTabar);
+router.put('/:id', upload.none(), updateTabar);
 
-// הוספת מקור מימון (funding)
-router.post('/:id/funding', addFundingSource);
+// הוספת מקור מימון
+router.post('/:id/funding', upload.none(), addFundingSource);
 
-// הוספת הרשאה (permission)
-router.post('/:id/permission', addPermission);
+// הוספת הרשאה
+router.post('/:id/permission', upload.none(), addPermission);
 
-// הוספת מסמך (כולל העלאה בפועל)
-router.post('/:id/document', upload.single('file'), addDocument);
+// הוספת מסמכים – כולל כל שדות הקבצים האפשריים
+router.post('/:id/document', upload.fields([
+  { name: 'permission_file', maxCount: 1 },
+  { name: 'approval_file', maxCount: 1 },
+  { name: 'extra_file_1', maxCount: 1 },
+  { name: 'extra_file_2', maxCount: 1 },
+  { name: 'extra_file_3', maxCount: 1 }
+]), addDocument);
 
-// העלאת קובץ PDF וחילוץ נתונים (OCR)
+// העלאת קובץ ל-OCR
 router.post('/ocr', upload.single('file'), async (req, res) => {
   try {
     const filePath = req.file.path;

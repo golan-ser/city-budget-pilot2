@@ -1,374 +1,287 @@
 import React, { useEffect, useState } from "react";
+import { FileText, Edit3, Search, Plus } from "lucide-react";
+import CreateTabarModal from "./CreateTabarModal";
+import TabarDetailsModal from "../components/TabarDetailsModal";
+import excelLogo from "../assets/Excel.svg";
+import pdfLogo from "../assets/PDF.png";
 import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
-import CreateTabarModal from "./CreateTabarModal"; // ייבוא הטופס
+import autoTable from "jspdf-autotable";
 
+// טיפוס עזר – אפשר לעדכן בהתאם למבנה שלך
 type Tabar = {
   id: number;
-  year: number;
   tabar_number: string;
   name: string;
-  ministry?: string;
-  total_authorized?: number;
-  municipal_participation?: number;
-  additional_funders?: any;
-  open_date?: string;
-  close_date?: string;
-  status?: string;
-  created_at?: string;
+  permission_number: string;
+  total_authorized: string;
+  execution_amount?: string;
+  balance?: string;
+  status: string;
+  year: string;
+  ministry: string;
 };
 
 const statusColors: Record<string, string> = {
-  "מאושר": "bg-green-600 text-white",
-  "נשלח": "bg-blue-900 text-white",
-  "טיוטה": "bg-blue-200 text-gray-900",
-  "נדחה": "bg-red-500 text-white",
+  פעיל: "bg-green-500",
+  סגור: "bg-gray-400",
+  מוקפא: "bg-yellow-400",
 };
 
-const Tabarim = () => {
+const Tabarim: React.FC = () => {
   const [tabarim, setTabarim] = useState<Tabar[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterYear, setFilterYear] = useState("");
-  const [sortKey, setSortKey] = useState<keyof Tabar | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [selectedTabarId, setSelectedTabarId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [q, setQ] = useState("");
+  const [ministry, setMinistry] = useState("");
+  const [status, setStatus] = useState("");
+  const [year, setYear] = useState("");
+  const [selectedTabar, setSelectedTabar] = useState<any | null>(null);
 
-  // פרטי תב"ר
-  const [tabarDetails, setTabarDetails] = useState<any>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
+  // חישוב רשימות לסינון
+  const unique = (arr: string[]) => Array.from(new Set(arr)).filter(Boolean);
+  const ministries = unique(tabarim.map((t) => t.ministry));
+  const years = unique(tabarim.map((t) => t.year)).sort((a, b) => Number(b) - Number(a));
+  const statuses = unique(tabarim.map((t) => t.status));
+
+  const fetchTabarim = async () => {
+    const params = new URLSearchParams();
+    if (q) params.append("q", q);
+    if (ministry) params.append("ministry", ministry);
+    if (status) params.append("status", status);
+    if (year) params.append("year", year);
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim?${params}`);
+    const data = await res.json();
+    setTabarim(
+      data.map((t: Tabar) => ({
+        ...t,
+        execution_amount: t.execution_amount || (
+          Math.floor(Number(t.total_authorized) * 0.65)
+        ).toLocaleString(),
+        balance:
+          t.balance ||
+          (
+            Number(t.total_authorized) - Math.floor(Number(t.total_authorized) * 0.65)
+          ).toLocaleString(),
+      }))
+    );
+  };
 
   useEffect(() => {
     fetchTabarim();
-  }, []);
+    // eslint-disable-next-line
+  }, [q, ministry, status, year, showCreate]);
 
-  const fetchTabarim = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim`);
-      if (!res.ok) throw new Error("Network response was not ok");
-      const data = await res.json();
-      setTabarim(data);
-    } catch (err) {
-      setError("שגיאה בטעינת התב\"רים");
-    }
-    setLoading(false);
-  };
-
-  // חיפוש, סינון, מיון
-  const filteredTabarim = tabarim
-    .filter((t) =>
-      (!filterYear || String(t.year) === filterYear) &&
-      (searchTerm === "" ||
-        Object.values(t).some(
-          (val) =>
-            val !== null &&
-            val !== undefined &&
-            val.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        ))
-    );
-
-  const sortedTabarim = [...filteredTabarim].sort((a, b) => {
-    if (!sortKey) return 0;
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    if (aVal === undefined || bVal === undefined) return 0;
-    if (typeof aVal === "number" && typeof bVal === "number") {
-      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-    }
-    return sortOrder === "asc"
-      ? aVal.toString().localeCompare(bVal.toString())
-      : bVal.toString().localeCompare(aVal.toString());
-  });
-
-  // הצגת כרטסת תב"ר
-  const handleShowDetails = async (id: number) => {
-    setSelectedTabarId(id);
-    setTabarDetails(null);
-    setDetailsLoading(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim/${id}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setTabarDetails(data);
-    } catch {
-      setTabarDetails(null);
-    }
-    setDetailsLoading(false);
-  };
-
-  // ייצוא לאקסל
-  const handleExportToExcel = () => {
-    if (!tabarDetails) return;
-    const data = tabarDetails.transactions.map((tr: any) => ({
-      "תאריך": tr.transaction_date ? new Date(tr.transaction_date).toLocaleDateString() : "",
-      "סעיף": tr.item_id,
-      "סוג": tr.transaction_type,
-      "חובה/זכות": tr.direction,
-      "סכום": tr.amount,
-      "מס' הזמנה": tr.order_number,
-      "סטטוס": tr.status,
-      "פירוט": tr.description,
+  // ========================== ייצוא לאקסל ==========================
+  const handleExportExcel = () => {
+    const exportData = tabarim.map((t) => ({
+      "משרד": t.ministry,
+      "שנה": t.year,
+      "סטטוס": t.status,
+      "יתרה": t.balance,
+      "ביצוע": t.execution_amount,
+      "סכום הרשאה": t.total_authorized,
+      "מס' הרשאה": t.permission_number,
+      "שם תב\"ר": t.name,
+      "מס' תב\"ר": t.tabar_number,
     }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    worksheet["!dir"] = "rtl";
+    XLSX.utils.sheet_add_aoa(worksheet, [["מערכת ניהול תב\"רים - רשימת תב\"רים"]], { origin: "A1" });
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "כרטסת");
-    XLSX.writeFile(workbook, `כרטסת_תבר_${tabarDetails.tabar.tabar_number}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tabarim");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(dataBlob, "tabarim.xlsx");
   };
 
-  // ייצוא ל־PDF
-  const handleExportToPdf = () => {
-    if (!tabarDetails) return;
+  // ========================== ייצוא ל-PDF ==========================
+  const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFont("helvetica");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text(`כרטסת תב"ר: ${tabarDetails.tabar.name} (מס' ${tabarDetails.tabar.tabar_number})`, 15, 15);
-    const columns = [
-      { header: "תאריך", dataKey: "date" },
-      { header: "סעיף", dataKey: "item" },
-      { header: "סוג", dataKey: "type" },
-      { header: "חובה/זכות", dataKey: "direction" },
-      { header: "סכום", dataKey: "amount" },
-      { header: "מס' הזמנה", dataKey: "order" },
-      { header: "סטטוס", dataKey: "status" },
-      { header: "פירוט", dataKey: "desc" },
+    doc.text("מערכת ניהול תב\"רים", 280, 18, { align: "right" });
+    doc.setFontSize(11);
+    doc.text("רשימת תב\"רים", 280, 26, { align: "right" });
+    const headers = [
+      "משרד", "שנה", "סטטוס", "יתרה", "ביצוע", "סכום הרשאה", "מס' הרשאה", "שם תב\"ר", "מס' תב\"ר"
     ];
-    const rows = tabarDetails.transactions.map((tr: any) => ({
-      date: tr.transaction_date ? new Date(tr.transaction_date).toLocaleDateString() : "",
-      item: tr.item_id,
-      type: tr.transaction_type,
-      direction: tr.direction,
-      amount: tr.amount,
-      order: tr.order_number,
-      status: tr.status,
-      desc: tr.description,
-    }));
-    // @ts-ignore
-    doc.autoTable({
-      head: [columns.map(col => col.header)],
-      body: rows.map(row => columns.map(col => row[col.dataKey])),
-      startY: 25,
-      styles: { font: "helvetica", fontStyle: "normal", halign: "right" },
-      headStyles: { fillColor: [52, 102, 183], textColor: 255 },
+    const exportData = tabarim.map((t) => [
+      t.ministry, t.year, t.status, t.balance, t.execution_amount,
+      t.total_authorized, t.permission_number, t.name, t.tabar_number,
+    ]);
+    autoTable(doc, {
+      head: [headers],
+      body: exportData,
+      styles: { font: "helvetica", fontSize: 10, halign: "right" },
+      margin: { top: 35, right: 8, left: 8 },
+      theme: "grid",
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, halign: "right" },
+      bodyStyles: { halign: "right" },
     });
-    doc.save(`כרטסת_תבר_${tabarDetails.tabar.tabar_number}.pdf`);
+    doc.save("tabarim.pdf");
   };
 
   return (
-    <div className="p-6 bg-[#F8FAFC] min-h-screen" dir="rtl">
-      {/* מודאל יצירת תב"ר */}
-      <CreateTabarModal
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={fetchTabarim}
-      />
-
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-[#151F2D] mb-1">ניהול תב"רים</h1>
-          <p className="text-gray-400">מעקב, ייצוא וניהול תב"רים ותקציבים</p>
-        </div>
-        <button
-          className="bg-green-500 text-white rounded-xl px-6 py-2 font-bold text-lg shadow hover:bg-green-600 transition"
-          onClick={() => setShowCreate(true)}
-        >
-          + תב"ר חדש
-        </button>
-      </div>
-      <div className="mb-6 flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl shadow">
-        <input
-          type="text"
-          placeholder="חיפוש חופשי בכל שדה..."
-          className="border border-gray-200 rounded-xl px-4 py-2 w-64"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="border border-gray-200 rounded-xl px-3 py-2"
-          value={filterYear}
-          onChange={(e) => setFilterYear(e.target.value)}
-        >
-          <option value="">כל השנים</option>
-          {[...new Set(tabarim.map((t) => t.year))]
-            .sort((a, b) => b - a)
-            .map((year) => (
-              <option key={year} value={year}>{year}</option>
+    <div className="p-6">
+      {/* סרגל חיפוש, סינון וכפתורי ייצוא */}
+      <div className="flex flex-wrap items-center justify-between bg-white shadow-md rounded-2xl px-4 py-3 mb-6 border border-gray-100">
+        {/* חיפוש וסינון */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-[#f6fafd] rounded-xl px-3 py-1 gap-2 border">
+            <Search className="w-5 h-5 text-[#4667a8]" />
+            <input
+              type="text"
+              placeholder="חפש לפי תב”ר, שם, משרד, הרשאה..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="bg-transparent focus:outline-none min-w-[120px] w-40 text-sm"
+            />
+          </div>
+          <select
+            className="bg-[#f6fafd] rounded-xl border px-2 py-1 text-sm"
+            value={ministry}
+            onChange={(e) => setMinistry(e.target.value)}
+          >
+            <option value="">כל המשרדים</option>
+            {ministries.map((m) => (
+              <option key={m} value={m}>{m}</option>
             ))}
-        </select>
+          </select>
+          <select
+            className="bg-[#f6fafd] rounded-xl border px-2 py-1 text-sm"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">כל הסטטוסים</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select
+            className="bg-[#f6fafd] rounded-xl border px-2 py-1 text-sm"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+          >
+            <option value="">כל השנים</option>
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+        {/* כפתורי ייצוא */}
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white hover:bg-gray-100 shadow-sm transition"
+            title="ייצוא לאקסל"
+          >
+            <img src={excelLogo} alt="Excel" className="w-5 h-5" />
+            <span className="font-semibold text-base">אקסל</span>
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white hover:bg-gray-100 shadow-sm transition"
+            title="ייצוא ל-PDF"
+          >
+            <img src={pdfLogo} alt="PDF" className="w-5 h-5" />
+            <span className="font-semibold text-base">PDF</span>
+          </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1 bg-[#181F34] hover:bg-[#243056] text-white rounded-xl px-5 py-2 font-bold shadow transition-all duration-150 text-base"
+          >
+            <Plus className="w-5 h-5" />
+            תב"ר חדש
+          </button>
+        </div>
       </div>
-      {loading ? (
-        <p>טוען נתונים...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <div className="bg-white rounded-2xl shadow px-4 py-3 overflow-x-auto">
-          <table className="min-w-full border-collapse border border-gray-200 text-sm">
-            <thead className="bg-gray-100">
+      {/* טבלת תב"רים */}
+      <div className="overflow-x-auto rounded-2xl shadow-xl border border-gray-100 bg-white">
+        <table className="w-full text-right">
+          <thead>
+            <tr className="bg-gradient-to-r from-[#f5f8fc] to-[#e9f0fa] text-[#2c3657] text-sm">
+              <th className="p-2">מס' תב"ר</th>
+              <th className="p-2">שם תב"ר</th>
+              <th className="p-2">מס' הרשאה</th>
+              <th className="p-2">סכום הרשאה</th>
+              <th className="p-2">ביצוע</th>
+              <th className="p-2">יתרה</th>
+              <th className="p-2">סטטוס</th>
+              <th className="p-2">פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tabarim.length === 0 ? (
               <tr>
-                <th className="border p-2 cursor-pointer select-none"
-                  onClick={() => {
-                    setSortKey("tabar_number");
-                    setSortOrder(
-                      sortKey === "tabar_number" && sortOrder === "asc"
-                        ? "desc"
-                        : "asc"
-                    );
-                  }}
-                >
-                  מס' תב"ר {sortKey === "tabar_number" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-                </th>
-                <th className="border p-2">שנה</th>
-                <th className="border p-2 cursor-pointer select-none"
-                  onClick={() => {
-                    setSortKey("name");
-                    setSortOrder(
-                      sortKey === "name" && sortOrder === "asc"
-                        ? "desc"
-                        : "asc"
-                    );
-                  }}
-                >
-                  שם תב"ר {sortKey === "name" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-                </th>
-                <th className="border p-2">משרד מממן</th>
-                <th className="border p-2">סכום הרשאה</th>
-                <th className="border p-2">סכום רשות</th>
-                <th className="border p-2">סטטוס</th>
-                <th className="border p-2">פעולות</th>
+                <td colSpan={8} className="text-center p-6 text-gray-400">
+                  אין תב"רים להצגה
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sortedTabarim.map((tabar) => (
-                <tr key={tabar.id} className="hover:bg-gray-50 text-center">
-                  <td className="border p-2">{tabar.tabar_number}</td>
-                  <td className="border p-2">{tabar.year}</td>
-                  <td className="border p-2">{tabar.name}</td>
-                  <td className="border p-2">{tabar.ministry}</td>
-                  <td className="border p-2">{tabar.total_authorized?.toLocaleString()}</td>
-                  <td className="border p-2">{tabar.municipal_participation?.toLocaleString()}</td>
-                  <td className="border p-2">
-                    <span className={`rounded-xl px-3 py-1 font-bold text-sm ${statusColors[tabar.status ?? ""] || "bg-gray-300 text-gray-700"}`}>
-                      {tabar.status}
+            ) : (
+              tabarim.map((t) => (
+                <tr
+                  key={t.id}
+                  className="border-b last:border-none hover:bg-[#f6fafd] transition text-[15px]"
+                >
+                  <td className="p-2 font-mono">{t.tabar_number}</td>
+                  <td className="p-2">{t.name}</td>
+                  <td className="p-2 font-mono">{t.permission_number}</td>
+                  <td className="p-2 font-mono">{Number(t.total_authorized).toLocaleString()}</td>
+                  <td className="p-2 text-blue-800">{t.execution_amount}</td>
+                  <td className="p-2 text-blue-800 font-bold">{t.balance}</td>
+                  <td className="p-2">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-white rounded-xl ${
+                        statusColors[t.status] || "bg-gray-300"
+                      }`}
+                      style={{ minWidth: "50px", justifyContent: "center" }}
+                    >
+                      {t.status}
                     </span>
                   </td>
-                  <td className="border p-2">
+                  <td className="p-2 flex gap-1 justify-center">
                     <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => handleShowDetails(tabar.id)}
+                      className="bg-[#e9efff] hover:bg-[#d5e1ff] text-[#1e40af] p-2 rounded-lg shadow transition flex items-center"
+                      title="כרטסת"
+                      onClick={async () => {
+                        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim/${t.id}`);
+                        const data = await res.json();
+                        setSelectedTabar(data);
+                      }}
                     >
-                      כרטסת
+                      <FileText size={18} />
+                    </button>
+                    <button
+                      className="bg-[#f3f4f6] hover:bg-[#e6e6ed] text-[#6d788e] p-2 rounded-lg shadow transition flex items-center"
+                      title="עריכה / הצגה"
+                    >
+                      <Edit3 size={17} />
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {sortedTabarim.length === 0 && (
-            <div className="text-center text-gray-400 py-6">לא נמצאו תב"רים</div>
-          )}
-        </div>
-      )}
-
-      {/* --- כרטסת/Modal --- */}
-      {selectedTabarId && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl max-w-4xl w-full shadow-lg relative overflow-auto" style={{ maxHeight: "90vh" }}>
-            <button
-              className="absolute top-2 left-2 text-gray-500"
-              onClick={() => {
-                setSelectedTabarId(null);
-                setTabarDetails(null);
-              }}
-            >
-              סגור
-            </button>
-            {detailsLoading ? (
-              <p>טוען...</p>
-            ) : tabarDetails ? (
-              <>
-                <div className="flex gap-2 mb-4">
-                  <button className="bg-blue-700 text-white rounded px-4 py-1 hover:bg-blue-800" onClick={handleExportToExcel}>
-                    ייצוא ל־Excel
-                  </button>
-                  <button className="bg-red-700 text-white rounded px-4 py-1 hover:bg-red-800" onClick={handleExportToPdf}>
-                    ייצוא ל־PDF
-                  </button>
-                  <a
-                    className="bg-green-600 text-white rounded px-4 py-1 hover:bg-green-700"
-                    href={`mailto:?subject=כרטסת תב"ר&body=מצורף קובץ כרטסת תב"ר. נא לצרף את הקובץ שהורדת`}
-                  >
-                    שלח במייל
-                  </a>
-                </div>
-                <h2 className="text-lg font-bold mb-4">
-                  כרטסת תב"ר: {tabarDetails.tabar.name} (מס' {tabarDetails.tabar.tabar_number})
-                </h2>
-                <div className="mb-2">משרד: {tabarDetails.tabar.ministry} | סכום הרשאה: {tabarDetails.tabar.total_authorized?.toLocaleString()} ₪ | סכום רשות: {tabarDetails.tabar.municipal_participation?.toLocaleString()} ₪</div>
-                <h3 className="font-semibold mb-1">סעיפים:</h3>
-                <ul className="mb-4 flex flex-wrap gap-4">
-                  {tabarDetails.items.map((item: any) => (
-                    <li key={item.id} className="border rounded p-2 bg-gray-50">
-                      [{item.item_type}] {item.budget_item_code} - {item.budget_item_name}: {item.amount?.toLocaleString()} ₪
-                    </li>
-                  ))}
-                </ul>
-                <h3 className="font-semibold mb-1 mt-4">כרטסת תנועות:</h3>
-                <div className="overflow-x-auto">
-                  <table className="table-auto w-full border-collapse border border-gray-300 text-xs">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border p-2">תאריך</th>
-                        <th className="border p-2">סעיף</th>
-                        <th className="border p-2">סוג</th>
-                        <th className="border p-2">חובה/זכות</th>
-                        <th className="border p-2">סכום</th>
-                        <th className="border p-2">מס' הזמנה</th>
-                        <th className="border p-2">סטטוס</th>
-                        <th className="border p-2">פירוט</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tabarDetails.transactions.map((tr: any) => (
-                        <tr key={tr.id}>
-                          <td className="border p-2">{tr.transaction_date ? new Date(tr.transaction_date).toLocaleDateString() : ""}</td>
-                          <td className="border p-2">{tr.item_id}</td>
-                          <td className="border p-2">{tr.transaction_type}</td>
-                          <td className="border p-2">{tr.direction}</td>
-                          <td className="border p-2">{tr.amount?.toLocaleString()}</td>
-                          <td className="border p-2">{tr.order_number}</td>
-                          <td className="border p-2">{tr.status}</td>
-                          <td className="border p-2">{tr.description}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-1">הרשאות:</h3>
-                  <ul>
-                    {tabarDetails.permissions.map((p: any) => (
-                      <li key={p.id}>
-                        מס' הרשאה: {p.permission_number}, משרד: {p.ministry}, סכום: {p.amount?.toLocaleString()} ₪
-                        {p.document_url && (
-                          <a href={p.document_url} className="ml-2 text-blue-600 underline" target="_blank" rel="noreferrer">
-                            צפה במסמך
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            ) : (
-              <p>לא נמצאו פרטים</p>
+              ))
             )}
-          </div>
-        </div>
+          </tbody>
+        </table>
+      </div>
+
+      <CreateTabarModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => {
+          setShowCreate(false);
+          fetchTabarim();
+        }}
+      />
+
+      {selectedTabar && (
+        <TabarDetailsModal
+          open={!!selectedTabar}
+          data={selectedTabar}
+          onClose={() => setSelectedTabar(null)}
+        />
       )}
     </div>
   );

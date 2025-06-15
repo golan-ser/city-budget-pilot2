@@ -1,0 +1,1 @@
+ALTER TABLE tabarim ADD COLUMN department text;
