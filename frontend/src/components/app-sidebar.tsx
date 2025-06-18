@@ -1,85 +1,87 @@
-import { useState } from "react"
+import React from "react"
 import { 
-  BarChart3, 
+  LayoutDashboard,
   FileText, 
-  Folder, 
-  Plus,   // <-- משתמש באייקון Plus עבור תב"רים
-  Search, 
-  Settings 
+  FolderKanban, 
+  FileSpreadsheet,
+  Settings,
+  BarChartBig,
+  PanelLeft
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar"
+import { useNavigate, useLocation } from "react-router-dom"
 
 const items = [
-  { title: "דשבורד", url: "/", icon: BarChart3 },
-  { title: "דיווחים", url: "/reports", icon: FileText },
-  { title: "ניהול פרויקטים", url: "/projects", icon: Folder },
-  { title: "דוחות", url: "/analytics", icon: Search },
-  { title: "תב\"רים", url: "/tabarim", icon: Plus },      // <-- הוספת תב"רים!
+  { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard },
+  { title: "דיווחים", url: "/analytics", icon: FileText },
+  { title: "ניהול פרויקטים", url: "/projects", icon: FolderKanban },
+  { title: "תב\"רים", url: "/tabarim", icon: FileSpreadsheet },
+  { title: "דוחות", url: "/reports", icon: BarChartBig },
   { title: "ניהול מערכת", url: "/admin", icon: Settings },
 ]
 
 export function AppSidebar() {
-  const { state } = useSidebar()
+  const navigate = useNavigate()
   const location = useLocation()
   const currentPath = location.pathname
-  const isCollapsed = state === "collapsed"
+  const [isCollapsed, setIsCollapsed] = React.useState(false)
 
-  const isActive = (path: string) => currentPath === path
-  const isExpanded = items.some((i) => isActive(i.url))
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+  const isActive = (path: string) => {
+    return currentPath === path
+  }
+
+  const handleNavigation = (url: string) => {
+    navigate(url)
+  }
 
   return (
-    <Sidebar
-      side="right"
-      className={isCollapsed ? "w-14" : "w-64"}
-      collapsible="icon"
-    >
-      <SidebarContent className="bg-sidebar">
-        <div className="p-4 border-b border-sidebar-border">
-          {!isCollapsed && (
-            <div className="text-right">
-              <h2 className="text-lg font-bold text-sidebar-foreground">מערכת תב"ר</h2>
-              <p className="text-sm text-sidebar-foreground/70">ניהול פרויקטים</p>
-            </div>
-          )}
-          <SidebarTrigger className="ml-auto text-sidebar-foreground hover:bg-sidebar-accent" />
-        </div>
+    <div className={`fixed top-0 right-0 h-full bg-slate-900 text-white transition-all duration-300 z-50 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+      {/* Header */}
+      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+        {!isCollapsed && (
+          <div className="text-right">
+            <h2 className="text-lg font-bold">מערכת תב"ר</h2>
+            <p className="text-sm text-slate-300">ניהול פרויקטים</p>
+          </div>
+        )}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 hover:bg-slate-700 rounded"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
+      </div>
 
-        <SidebarGroup className="px-2">
-          <SidebarGroupLabel className="text-sidebar-foreground/70 text-right px-2">
-            {!isCollapsed && "תפריט עיקרי"}
-          </SidebarGroupLabel>
-
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="ml-3 h-4 w-4" />
-                      {!isCollapsed && <span className="text-right">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+      {/* Menu */}
+      <div className="p-4">
+        {!isCollapsed && (
+          <h3 className="text-sm text-slate-400 mb-4 text-right">תפריט עיקרי</h3>
+        )}
+        
+        <nav className="space-y-2">
+          {items.map((item, index) => {
+            const Icon = item.icon
+            const active = isActive(item.url)
+            
+            return (
+              <button
+                key={index}
+                onClick={() => handleNavigation(item.url)}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-right ${
+                  active 
+                    ? 'bg-blue-600 text-white' 
+                    : 'hover:bg-slate-700 text-slate-200'
+                } ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+                title={isCollapsed ? item.title : undefined}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {!isCollapsed && (
+                  <span className="flex-1 text-right">{item.title}</span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
+    </div>
   )
 }

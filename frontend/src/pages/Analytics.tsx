@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Loader2 } from "lucide-react";
+import { OpenAIStatus } from "@/components/OpenAIStatus";
 
 // דוגמאות לערכים אפשריים (ניתן לשלוף גם מה-DB)
 const years = [2023, 2024, 2025];
@@ -46,7 +47,7 @@ export default function Analytics() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:3000/api/report-schemas/run", {
+            fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -125,7 +126,7 @@ export default function Analytics() {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-right">
             <div className="text-2xl font-bold text-primary">
@@ -134,6 +135,11 @@ export default function Analytics() {
             <div className="text-sm text-muted-foreground">סך כל התקציב המאושר</div>
           </CardContent>
         </Card>
+        
+        {/* OpenAI Status */}
+        <div className="md:col-span-2">
+          <OpenAIStatus />
+        </div>
       </div>
 
       {/* טבלת דוח ניצול תקציב */}

@@ -63,9 +63,12 @@ export const getTabarDetails = async (req, res) => {
   }
 };
 
-// יצירת תב"ר חדש
+// יצירת תב"ר חדש עם סעיפי הכנסה והוצאה אוטומטיים
 export const createTabar = async (req, res) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+
     const {
       tabar_number, name, year, ministry,
       total_authorized, permission_number, status,
@@ -73,10 +76,11 @@ export const createTabar = async (req, res) => {
       department, additional_funders, municipal_participation
     } = req.body;
 
-    const totalAuthorizedValue = total_authorized ? Number(total_authorized) : null;
-    const municipalParticipationValue = municipal_participation ? Number(municipal_participation) : null;
+    const totalAuthorizedValue = total_authorized ? Number(total_authorized) : 0;
+    const municipalParticipationValue = municipal_participation ? Number(municipal_participation) : 0;
 
-    const result = await pool.query(
+    // יצירת התב"ר
+    const tabarResult = await client.query(
       `INSERT INTO tabarim (tabar_number, name, year, ministry, total_authorized, permission_number, status, open_date, close_date, department, additional_funders, municipal_participation)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
@@ -86,10 +90,207 @@ export const createTabar = async (req, res) => {
         department, additional_funders, municipalParticipationValue
       ]
     );
-    res.status(201).json(result.rows[0]);
+
+    const newTabar = tabarResult.rows[0];
+    const tabarId = newTabar.id;
+
+    // יצירת סעיפי הכנסה והוצאה אוטומטיים
+    if (totalAuthorizedValue > 0) {
+      // סעיף הכנסה - התקציב המאושר
+      await client.query(
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          tabarId,
+          'הכנסה',
+          `${tabar_number}-INC-001`,
+          `הכנסה - ${name}`,
+          totalAuthorizedValue,
+          'סעיף הכנסה אוטומטי'
+        ]
+      );
+
+      // סעיף הוצאה - התקציב המאושר
+      await client.query(
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          tabarId,
+          'הוצאה',
+          `${tabar_number}-EXP-001`,
+          `הוצאה - ${name}`,
+          totalAuthorizedValue,
+          'סעיף הוצאה אוטומטי'
+        ]
+      );
+    }
+
+    // אם יש השתתפות עירונית, יוצרים סעיף נפרד
+    if (municipalParticipationValue > 0) {
+      await client.query(
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          tabarId,
+          'הכנסה',
+          `${tabar_number}-MUN-001`,
+          `השתתפות עירונית - ${name}`,
+          municipalParticipationValue,
+          'השתתפות עירונית'
+        ]
+      );
+    }
+
+    await client.query('COMMIT');
+    
+    // החזרת התב"ר החדש עם הפריטים
+    const itemsRes = await pool.query('SELECT * FROM tabar_items WHERE tabar_id = $1', [tabarId]);
+    
+    res.status(201).json({
+      tabar: newTabar,
+      items: itemsRes.rows
+    });
+
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Error creating tabar:', err);
     res.status(500).json({ error: 'Failed to create tabar' });
+  } finally {
+    client.release();
+  }
+};
+
+// הוספת פריט תקציב חדש
+export const addTabarItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { item_type, budget_item_code, budget_item_name, amount, notes } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [id, item_type, budget_item_code, budget_item_name, amount, notes]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error adding tabar item:', err);
+    res.status(500).json({ error: 'Failed to add tabar item' });
+  }
+};
+
+// עדכון פריט תקציב
+export const updateTabarItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { item_type, budget_item_code, budget_item_name, amount, notes } = req.body;
+
+    const result = await pool.query(
+      `UPDATE tabar_items SET
+        item_type = $1, budget_item_code = $2, budget_item_name = $3, amount = $4, notes = $5
+       WHERE id = $6 RETURNING *`,
+      [item_type, budget_item_code, budget_item_name, amount, notes, itemId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating tabar item:', err);
+    res.status(500).json({ error: 'Failed to update tabar item' });
+  }
+};
+
+// מחיקת פריט תקציב
+export const deleteTabarItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    // מחיקת תנועות קשורות לפריט
+    await pool.query('DELETE FROM tabar_transactions WHERE item_id = $1', [itemId]);
+    
+    // מחיקת הפריט
+    const result = await pool.query('DELETE FROM tabar_items WHERE id = $1 RETURNING *', [itemId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    res.json({ message: 'Item deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting tabar item:', err);
+    res.status(500).json({ error: 'Failed to delete tabar item' });
+  }
+};
+
+// הוספת תנועה כספית
+export const addTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      item_id, transaction_type, transaction_date, order_number, 
+      amount, direction, status, description 
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO tabar_transactions 
+       (tabar_id, item_id, transaction_type, transaction_date, order_number, amount, direction, status, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [id, item_id, transaction_type, transaction_date, order_number, amount, direction, status, description]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error adding transaction:', err);
+    res.status(500).json({ error: 'Failed to add transaction' });
+  }
+};
+
+// עדכון תנועה כספית
+export const updateTransaction = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const { 
+      transaction_type, transaction_date, order_number, 
+      amount, direction, status, description 
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE tabar_transactions SET
+        transaction_type = $1, transaction_date = $2, order_number = $3,
+        amount = $4, direction = $5, status = $6, description = $7
+       WHERE id = $8 RETURNING *`,
+      [transaction_type, transaction_date, order_number, amount, direction, status, description, transactionId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating transaction:', err);
+    res.status(500).json({ error: 'Failed to update transaction' });
+  }
+};
+
+// מחיקת תנועה כספית
+export const deleteTransaction = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+
+    const result = await pool.query('DELETE FROM tabar_transactions WHERE id = $1 RETURNING *', [transactionId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    res.json({ message: 'Transaction deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting transaction:', err);
+    res.status(500).json({ error: 'Failed to delete transaction' });
   }
 };
 

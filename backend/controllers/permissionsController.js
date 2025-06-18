@@ -25,13 +25,35 @@ export const getPermissionsById = async (req, res) => {
 };
 
 export const createPermissions = async (req, res) => {
-  // יש להוסיף שדות מתאימים לפי טבלה
-  res.status(201).json({ message: 'create Permissions not implemented' });
+  try {
+    const { project_id, year, ministry, amount, valid_until } = req.body;
+    const result = await pool.query(
+      'INSERT INTO permissions (project_id, year, ministry, amount, valid_until) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [project_id, year, ministry, amount, valid_until]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Error creating permission:', error);
+    res.status(500).json({ error: 'Failed to create permission' });
+  }
 };
 
 export const updatePermissions = async (req, res) => {
-  // יש להוסיף עדכון לפי מזהה
-  res.json({ message: 'update Permissions not implemented' });
+  try {
+    const { id } = req.params;
+    const { project_id, year, ministry, amount, valid_until } = req.body;
+    const result = await pool.query(
+      'UPDATE permissions SET project_id = $1, year = $2, ministry = $3, amount = $4, valid_until = $5 WHERE id = $6 RETURNING *',
+      [project_id, year, ministry, amount, valid_until, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Permission not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Error updating permission:', error);
+    res.status(500).json({ error: 'Failed to update permission' });
+  }
 };
 
 export const deletePermissions = async (req, res) => {

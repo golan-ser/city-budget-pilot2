@@ -5,6 +5,12 @@ import {
   getTabarDetails,
   createTabar,
   updateTabar,
+  addTabarItem,
+  updateTabarItem,
+  deleteTabarItem,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction,
   addFundingSource,
   addPermission,
   addDocument,
@@ -37,6 +43,16 @@ router.post('/', upload.none(), createTabar);
 
 // עדכון תב"ר קיים
 router.put('/:id', upload.none(), updateTabar);
+
+// ניהול פריטי תקציב
+router.post('/:id/items', upload.none(), addTabarItem);
+router.put('/items/:itemId', upload.none(), updateTabarItem);
+router.delete('/items/:itemId', deleteTabarItem);
+
+// ניהול תנועות כספיות
+router.post('/:id/transactions', upload.none(), addTransaction);
+router.put('/transactions/:transactionId', upload.none(), updateTransaction);
+router.delete('/transactions/:transactionId', deleteTransaction);
 
 // הוספת מקור מימון
 router.post('/:id/funding', upload.none(), addFundingSource);

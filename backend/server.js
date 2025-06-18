@@ -1,56 +1,57 @@
-// server.js
+import express from "express";
+import cors from "cors";
+import pg from "pg";
+import reportSchemasRouter from "./routes/reportSchemas.js";
+import tabarimRouter from "./routes/tabarimRoutes.js";
+import reportsRouter from "./routes/reportsRoutes.js";
+import projectsRouter from "./routes/projectsRoutes.js";
+import commentsRouter from "./routes/commentsRoutes.js";
+import milestonesRouter from "./routes/milestonesRoutes.js";
+import permissionsRouter from "./routes/permissionsRoutes.js";
+import fundingRouter from "./routes/fundingRoutes.js";
+import documentsRouter from "./routes/documentsRoutes.js";
+import analyticsRouter from "./routes/analyticsRoutes.js";
+import departmentsRouter from "./routes/departmentsRoutes.js";
+import smartQueryRouter from "./routes/smartQueryRoutes.js";
 
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-
-// טוען משתני סביבה מהקובץ .env
-dotenv.config();
-
-// יוצרים מופע של אפליקציית Express
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// הגדרות כלליות
-app.use(cors()); // מאפשר בקשות ממקורות חיצוניים
-app.use(express.json()); // מאפשר קריאת JSON בגוף הבקשות
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:3000', 'http://localhost:5173'],
+  credentials: true
+}));
+app.use(express.json());
 
-// יבוא של כל קבצי הנתיבים (Routes)
-import projectRoutes from './routes/projectsRoutes.js';
-import reportRoutes from './routes/reportsRoutes.js';
-import documentRoutes from './routes/documentsRoutes.js';
-import milestoneRoutes from './routes/milestonesRoutes.js';
-import commentRoutes from './routes/commentsRoutes.js';
-import permissionRoutes from './routes/permissionsRoutes.js';
-import fundingRoutes from './routes/fundingRoutes.js';
-import analyticsRoutes from './routes/analyticsRoutes.js';
-import tabarimRoutes from './routes/tabarimRoutes.js';
-
-// מחולל סכמות דוחות - חובה להוסיף!
-import reportSchemasRouter from './routes/reportSchemas.js';
-
-// חיבור הנתיבים לאפליקציה
-app.use('/api/projects', projectRoutes);
-app.use('/api/reports', reportRoutes); // CRUD דוחות ישנים
-app.use('/api/documents', documentRoutes);
-app.use('/api/milestones', milestoneRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/permissions', permissionRoutes);
-app.use('/api/funding', fundingRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/tabarim', tabarimRoutes);
-
-// חיבור מחולל סכמות דוחות לנתיב ייחודי
-app.use('/api/report-schemas', reportSchemasRouter); // 👈 זה הנתיב למחולל החדש
-
-// ברירת מחדל – מסך ראשי
-app.get('/', (req, res) => {
-  res.json({ message: 'City Budget API', version: '1.0.0' });
+// Middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.method === 'POST') {
+    console.log('Request body:', req.body);
+  }
+  next();
 });
 
-// הפעלת השרת
+// חיבור ל־PostgreSQL
+const pool = new pg.Pool({
+  connectionString: "postgresql://postgres:Admin0697812@localhost:5432/city_budget",
+});
+app.set("db", pool);
+
+// ראוטים
+app.use("/api/report-schemas", reportSchemasRouter);
+app.use("/api/tabarim", tabarimRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/projects", projectsRouter);
+app.use("/api/comments", commentsRouter);
+app.use("/api/milestones", milestonesRouter);
+app.use("/api/permissions", permissionsRouter);
+app.use("/api/funding", fundingRouter);
+app.use("/api/documents", documentsRouter);
+app.use("/api/analytics", analyticsRouter);
+app.use("/api/departments", departmentsRouter);
+app.use("/api/smart-query", smartQueryRouter);
+
 app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
+  console.log(`🚀 Server is running at http://localhost:${port}`);
 });
-
-export default app;

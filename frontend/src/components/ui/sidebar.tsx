@@ -1,7 +1,8 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, BarChartBig } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -492,7 +493,16 @@ const SidebarMenu = React.forwardRef<
     data-sidebar="menu"
     className={cn("flex w-full min-w-0 flex-col gap-1", className)}
     {...props}
-  />
+  >
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild>
+        <Link to="/reports">
+          <BarChartBig className="mr-2" />
+          <span>דוחות</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  </ul>
 ))
 SidebarMenu.displayName = "SidebarMenu"
 
