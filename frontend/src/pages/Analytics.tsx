@@ -47,7 +47,7 @@ export default function Analytics() {
 
   useEffect(() => {
     setLoading(true);
-            fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
+            fetch(`/api/report-schemas/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

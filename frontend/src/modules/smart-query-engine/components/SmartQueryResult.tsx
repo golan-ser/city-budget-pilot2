@@ -7,8 +7,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Download, FileText, Table as TableIcon, BarChart3, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
 import { ParsedIntent, QueryField, SmartQueryResult as QueryResult } from '../types/querySchema';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 interface SmartQueryResultProps {
   result: QueryResult;
@@ -82,29 +80,8 @@ export function SmartQueryResult({ result, fields, onExport, className = '' }: S
   };
 
   const exportAsPDF = () => {
-    const doc = new jsPDF();
-    doc.setFont("helvetica");
-    doc.setFontSize(16);
-    doc.text("דוח חכם", 14, 20);
-    
-    doc.setFontSize(10);
-    doc.text(`נוצר בתאריך: ${new Date().toLocaleDateString("he-IL")}`, 14, 30);
-    doc.text(`סה"כ רשומות: ${totalCount}`, 14, 35);
-    doc.text(`זמן ביצוע: ${executionTime}ms`, 14, 40);
-
-    const tableData = data.map(row => 
-      fields.map(field => formatValue(row[field.key], field))
-    );
-
-    autoTable(doc, {
-      head: [fields.map(f => f.label)],
-      body: tableData,
-      startY: 50,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
-    });
-
-    doc.save(`smart_query_${Date.now()}.pdf`);
+    // TODO: Implement API-based PDF export for smart queries
+    alert('ייצוא PDF לשאילתות חכמות יתווסף בקרוב');
   };
 
   if (!data.length) {

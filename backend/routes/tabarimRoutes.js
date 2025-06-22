@@ -14,6 +14,11 @@ import {
   addFundingSource,
   addPermission,
   addDocument,
+  exportTabarimPDF,
+  getTabarDocuments,
+  createTabarDocument,
+  updateTabarDocument,
+  deleteTabarDocument
 } from '../controllers/tabarimController.js';
 import { extractTextFromPdf } from '../util/pdfOcr.js';
 import { parsePermissionText } from '../util/parsePermissionText.js';
@@ -34,6 +39,9 @@ const upload = multer({ storage });
 
 // שליפת כל התב"רים
 router.get('/', getAllTabarim);
+
+// ייצוא PDF לרשימת תב"רים
+router.get('/export-pdf', exportTabarimPDF);
 
 // שליפת תב"ר בודד
 router.get('/:id', getTabarDetails);
@@ -68,6 +76,12 @@ router.post('/:id/document', upload.fields([
   { name: 'extra_file_2', maxCount: 1 },
   { name: 'extra_file_3', maxCount: 1 }
 ]), addDocument);
+
+// ניהול מסמכי תב"ר - endpoints חדשים
+router.get('/:id/documents', getTabarDocuments);
+router.post('/:id/documents', upload.single('file'), createTabarDocument);
+router.put('/documents/:documentId', upload.single('file'), updateTabarDocument);
+router.delete('/documents/:documentId', deleteTabarDocument);
 
 // העלאת קובץ ל-OCR
 router.post('/ocr', upload.single('file'), async (req, res) => {

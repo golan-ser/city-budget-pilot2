@@ -30,6 +30,7 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
   const [approvalFile, setApprovalFile] = useState<File | null>(null);
   const [extraDocs, setExtraDocs] = useState<ExtraDoc[]>([]);
   const [extracting, setExtracting] = useState(false);
+  const [createProject, setCreateProject] = useState(false); // תיבת סימון לפרויקט
 
   // שדה טקסט רגיל
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +67,7 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
     formData.append("file", permissionFile);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim/ocr`, {
+      const res = await fetch(`/api/tabarim/ocr`, {
         method: "POST",
         body: formData,
       });
@@ -97,13 +98,15 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
     Object.entries(form).forEach(([key, val]) => formData.append(key, val));
 
     let tabarId: string | number | null = null;
+    let newTabar: any = null;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim`, {
+      const res = await fetch(`/api/tabarim`, {
         method: "POST",
         body: formData,
       });
       if (!res.ok) throw new Error("שגיאה ביצירת תב'ר");
       const data = await res.json();
+      newTabar = data;
       tabarId = data.id || data.tabar_id || data.tabarId;
       if (!tabarId) throw new Error("לא התקבל מזהה תב'ר");
     } catch (err) {
@@ -123,7 +126,7 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
     // שלח קבצים רק אם יש לפחות קובץ אחד
     if (permissionFile || approvalFile || extraDocs.some(doc => doc.file)) {
       try {
-        const resFiles = await fetch(`${import.meta.env.VITE_API_URL}/api/tabarim/${tabarId}/document`, {
+        const resFiles = await fetch(`/api/tabarim/${tabarId}/document`, {
           method: "POST",
           body: filesFormData,
         });
@@ -131,6 +134,44 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
       } catch (err) {
         alert("שגיאה בהעלאת קבצים. ניתן להעלות קבצים ידנית לאחר מכן.");
         // לא עוצר את התהליך, רק מתריע
+      }
+    }
+
+    // 3. יצירת פרויקט בניהול פרויקטים (אם נבחר)
+    if (createProject && newTabar) {
+      try {
+        // יצירת פרויקט חדש עם נתוני התב"ר
+        const projectData = {
+          tabar_id: tabarId,
+          name: newTabar.name,
+          description: `פרויקט עבור תב"ר ${newTabar.tabar_number} - ${newTabar.name}`,
+          start_date: newTabar.open_date,
+          end_date: newTabar.close_date,
+          managers: [] // רשימה ריקה של מנהלים
+        };
+
+        const projectRes = await fetch(`/api/projects/from-tabar`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(projectData),
+        });
+
+        if (projectRes.ok) {
+          const projectResult = await projectRes.json();
+          const projectId = projectResult.id;
+          
+          // פתיחת טאב חדש עם דף ניהול הפרויקטים
+          const projectUrl = `${window.location.origin}/projects/${projectId}`;
+          window.open(projectUrl, '_blank');
+        } else {
+          console.error('שגיאה ביצירת פרויקט:', await projectRes.text());
+          alert("התב\"ר נוצר בהצלחה, אך הייתה שגיאה ביצירת הפרויקט. ניתן ליצור פרויקט ידנית.");
+        }
+      } catch (err) {
+        console.error('שגיאה ביצירת פרויקט:', err);
+        alert("התב\"ר נוצר בהצלחה, אך הייתה שגיאה ביצירת הפרויקט. ניתן ליצור פרויקט ידנית.");
       }
     }
 
@@ -240,6 +281,22 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
               <FilePlus className="w-4 h-4" />
               הוסף מסמך
             </button>
+          </div>
+
+          <hr className="my-2" />
+
+          {/* תיבת סימון ליצירת פרויקט */}
+          <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <input
+              type="checkbox"
+              id="createProject"
+              checked={createProject}
+              onChange={(e) => setCreateProject(e.target.checked)}
+              className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+            <label htmlFor="createProject" className="text-sm font-medium text-blue-900 cursor-pointer">
+              צור גם פרויקט בניהול פרויקטים (יפתח טאב חדש אחרי השמירה)
+            </label>
           </div>
 
           <hr className="my-2" />

@@ -4,6 +4,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import Analytics from "./Analytics";
 import Projects from "./Projects";
+import ProjectDetails from "./ProjectDetails";
 import Admin from "./Admin";
 import Tabarim from "./Tabarim";
 import ReportsHome from "@/modules/reports";
@@ -18,6 +19,10 @@ function AppContent() {
   const location = useLocation();
 
   const getPageTitle = () => {
+    if (location.pathname.startsWith("/projects/") && location.pathname !== "/projects") {
+      return "פרטי פרויקט";
+    }
+    
     switch (location.pathname) {
       case "/dashboard":
         return "דשבורד";
@@ -66,6 +71,7 @@ function AppContent() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:id" element={<ProjectDetails />} />
             <Route path="/tabarim" element={<Tabarim />} />
             <Route path="/reports" element={<ReportsHome />} />
             <Route path="/reports/budget-items" element={<BudgetItemsReport />} />

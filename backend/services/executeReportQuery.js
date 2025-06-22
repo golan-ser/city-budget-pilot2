@@ -285,15 +285,39 @@ function buildFromClause(domain, tableInfo) {
 function buildWhereClause(filters, domain, tableInfo) {
   const conditions = [];
   
-  // Handle each filter type
-  for (const [key, value] of Object.entries(filters)) {
-    if (value === null || value === undefined || value === '') {
-      continue;
-    }
+  // Special handling for department + ministry filters (use OR instead of AND)
+  if (filters.department && filters.ministry) {
+    const deptCondition = `t.ministry LIKE '%${filters.department}%'`;
+    const ministryCondition = `t.ministry LIKE '%${filters.ministry}%'`;
+    conditions.push(`(${deptCondition} OR ${ministryCondition})`);
     
-    const condition = buildFilterCondition(key, value, domain, tableInfo);
-    if (condition) {
-      conditions.push(condition);
+    // Remove department and ministry from filters to avoid double processing
+    const remainingFilters = { ...filters };
+    delete remainingFilters.department;
+    delete remainingFilters.ministry;
+    
+    // Handle remaining filters
+    for (const [key, value] of Object.entries(remainingFilters)) {
+      if (value === null || value === undefined || value === '') {
+        continue;
+      }
+      
+      const condition = buildFilterCondition(key, value, domain, tableInfo);
+      if (condition) {
+        conditions.push(condition);
+      }
+    }
+  } else {
+    // Handle each filter type normally
+    for (const [key, value] of Object.entries(filters)) {
+      if (value === null || value === undefined || value === '') {
+        continue;
+      }
+      
+      const condition = buildFilterCondition(key, value, domain, tableInfo);
+      if (condition) {
+        conditions.push(condition);
+      }
     }
   }
   
@@ -308,7 +332,7 @@ function buildFilterCondition(key, value, domain, tableInfo) {
   
   switch (key) {
     case 'tabar_number':
-      return `t.tabar_number = '${value}'`;
+      return `t.tabar_number = ${value}`;
       
     case 'year':
       return `t.year = ${value}`;
@@ -364,15 +388,16 @@ function buildSearchCondition(searchTerm, domain) {
   const searchConditions = [];
   
   if (domain === 'transactions' || domain === 'comprehensive') {
-    searchConditions.push(`tt.order_number LIKE '%${searchTerm}%'`);
-    searchConditions.push(`tt.transaction_type LIKE '%${searchTerm}%'`);
-    searchConditions.push(`tt.description LIKE '%${searchTerm}%'`);
+    searchConditions.push(`COALESCE(tt.order_number, '')::text LIKE '%${searchTerm}%'`);
+    searchConditions.push(`COALESCE(tt.transaction_type, '')::text LIKE '%${searchTerm}%'`);
+    searchConditions.push(`COALESCE(tt.description, '')::text LIKE '%${searchTerm}%'`);
   }
   
   if (domain === 'tabarim' || domain === 'comprehensive') {
-    searchConditions.push(`t.name LIKE '%${searchTerm}%'`);
-    searchConditions.push(`t.ministry LIKE '%${searchTerm}%'`);
-    searchConditions.push(`t.tabar_number LIKE '%${searchTerm}%'`);
+    searchConditions.push(`COALESCE(t.name, '')::text LIKE '%${searchTerm}%'`);
+    searchConditions.push(`COALESCE(t.ministry, '')::text LIKE '%${searchTerm}%'`);
+    // Cast tabar_number to text for LIKE operation
+    searchConditions.push(`t.tabar_number::text LIKE '%${searchTerm}%'`);
   }
   
   return searchConditions.length > 0 ? `(${searchConditions.join(' OR ')})` : null;

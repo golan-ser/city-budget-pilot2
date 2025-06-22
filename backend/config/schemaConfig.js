@@ -199,7 +199,7 @@ export const cityBudgetSchema = {
           key: 'status',
           label: 'סטטוס פרויקט',
           type: 'enum',
-          enumValues: ['פעיל', 'סגור', 'בתכנון', 'מושהה', 'בוטל'],
+          enumValues: ['נפתח', 'אושר', 'סגור', 'מושהה', 'בוטל'],
           required: false,
           searchable: false,
           filterable: true
@@ -235,7 +235,7 @@ export const cityBudgetSchema = {
       
       keywords: {
         primary: ['תבר', 'תב"ר', 'תב״ר', 'פרויקט', 'פרויקטים', 'תכנית'],
-        secondary: ['משרד', 'מחלקה', 'סטטוס', 'פעיל', 'סגור', 'תקציב']
+        secondary: ['משרד', 'מחלקה', 'סטטוס', 'נפתח', 'אושר', 'סגור', 'תקציב']
       }
     },
     
@@ -423,7 +423,7 @@ export const cityBudgetSchema = {
     comparatives: ['מעל', 'מתחת', 'יותר מ', 'פחות מ', 'בין', 'גדול מ', 'קטן מ'],
     quantifiers: ['כל', 'הכל', 'כמה', 'מספר', 'סכום', 'ממוצע'],
     timeWords: ['שנה', 'חודש', 'יום', 'השנה', 'שנה שעברה', 'השנה הנוכחית'],
-    statusWords: ['פעיל', 'סגור', 'שולם', 'לא שולם', 'בתהליך', 'מושהה']
+          statusWords: ['נפתח', 'אושר', 'סגור', 'שולם', 'לא שולם', 'בתהליך', 'מושהה']
   },
   
   // Example queries for user guidance

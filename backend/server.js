@@ -13,15 +13,20 @@ import documentsRouter from "./routes/documentsRoutes.js";
 import analyticsRouter from "./routes/analyticsRoutes.js";
 import departmentsRouter from "./routes/departmentsRoutes.js";
 import smartQueryRouter from "./routes/smartQueryRoutes.js";
+import dashboardRouter from "./routes/dashboardRoutes.js";
+import enhancedReportsRouter from "./routes/enhancedReportsRoutes.js";
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(cors({
   origin: ['http://localhost:8080', 'http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }));
-app.use(express.json());
+
+// הגדרת UTF-8 encoding מפורשת
+app.use(express.json({ charset: 'utf-8' }));
+app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
 
 // Middleware to log all requests
 app.use((req, res, next) => {
@@ -51,6 +56,8 @@ app.use("/api/documents", documentsRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/departments", departmentsRouter);
 app.use("/api/smart-query", smartQueryRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/enhanced-reports", enhancedReportsRouter);
 
 app.listen(port, () => {
   console.log(`🚀 Server is running at http://localhost:${port}`);

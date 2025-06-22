@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -66,6 +64,7 @@ export default function BudgetItemsReport() {
   const [loading, setLoading] = useState(true);
   const [filtersLoaded, setFiltersLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   // Dynamic filter options based on actual data
   const filterOptions = useMemo<FilterOptions>(() => {
@@ -330,7 +329,7 @@ export default function BudgetItemsReport() {
     console.log("🔄 Sending request to API:", JSON.stringify(requestBody, null, 2));
     console.log("🔍 Current filters state:", JSON.stringify(filters, null, 2));
 
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
+          fetch(`/api/report-schemas/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody)
@@ -403,36 +402,42 @@ export default function BudgetItemsReport() {
     localStorage.removeItem('budgetItemsFilters');
   };
 
-  const exportAsPDF = () => {
-    const doc = new jsPDF();
-    doc.setFont("helvetica");
-    doc.setFontSize(16);
-    doc.text("דוח סעיפי תקציב", 14, 20);
-    
-    doc.setFontSize(10);
-    doc.text(`נוצר בתאריך: ${new Date().toLocaleDateString("he-IL")}`, 14, 30);
-    doc.text(`סה"כ פריטים: ${filteredData.length}`, 14, 35);
-
-    const tableData = filteredData.map(row => [
-      row.name,
-      row.department,
-      row.status,
-      formatCurrency(row.approved_budget),
-      formatCurrency(row.executed_budget),
-      `${calculateUtilization(row.executed_budget, row.approved_budget).toFixed(1)}%`,
-      row.fiscal_year.toString(),
-      new Date(row.created_at).toLocaleDateString("he-IL")
-    ]);
-
-    autoTable(doc, {
-      head: [["שם סעיף", "מחלקה", "סטטוס", "תקציב מאושר", "ניצול בפועל", "אחוז ניצול", "שנת תקציב", "תאריך פתיחה"]],
-      body: tableData,
-      startY: 45,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
-    });
-
-    doc.save("budget_items_report.pdf");
+  const exportAsPDF = async () => {
+    try {
+      setExportingPDF(true);
+      
+      // בניית URL עם פרמטרים
+      const params = new URLSearchParams();
+      if (filters.department && filters.department !== 'all') params.append('department', filters.department);
+      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters.fiscal_year && filters.fiscal_year !== 'all') params.append('fiscal_year', filters.fiscal_year);
+      if (filters.utilization_range && filters.utilization_range !== 'all') params.append('utilization_range', filters.utilization_range);
+      if (filters.search) params.append('search', filters.search);
+      
+      const apiUrl = '';
+      const response = await fetch(`${apiUrl}/api/reports/budget-items/export-pdf?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `budget-items-report-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF exported successfully');
+    } catch (error) {
+      console.error('❌ Error exporting PDF:', error);
+      alert('שגיאה בייצוא PDF: ' + error.message);
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   const exportAsExcel = () => {
@@ -641,17 +646,17 @@ export default function BudgetItemsReport() {
                 </div>
 
                 <div className="flex items-end gap-2">
-                  {Object.keys(filters).length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearFilters}
+                {Object.keys(filters).length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
                       className="flex items-center gap-2"
-                    >
-                      <X className="h-4 w-4" />
-                      נקה סינון
-                    </Button>
-                  )}
+                  >
+                    <X className="h-4 w-4" />
+                    נקה סינון
+                  </Button>
+                )}
                 </div>
               </div>
 
@@ -663,10 +668,11 @@ export default function BudgetItemsReport() {
                       variant="outline"
                       size="sm"
                       onClick={exportAsPDF}
-                      className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200"
+                      disabled={exportingPDF}
+                      className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200 disabled:opacity-50"
                     >
                       <img src={pdfIcon} alt="PDF" className="w-5 h-5" />
-                      ייצוא PDF
+                      {exportingPDF ? 'מייצא...' : 'ייצוא PDF'}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -871,23 +877,23 @@ export default function BudgetItemsReport() {
                           <td className="p-4">
                             <div className="flex items-center gap-2">
                               {utilizationStatus.icon}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                   <span className="cursor-help hover:text-blue-600 transition-colors font-medium">
-                                    {row.name}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <div className="space-y-1 text-sm">
+                                  {row.name}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <div className="space-y-1 text-sm">
                                     <p><strong>תקציב מאושר:</strong> {formatCurrency(row.approved_budget)}</p>
                                     <p><strong>ניצול בפועל:</strong> {formatCurrency(row.executed_budget)}</p>
                                     <p><strong>מחלקה:</strong> {row.department}</p>
-                                    <p><strong>סטטוס:</strong> {row.status}</p>
+                                  <p><strong>סטטוס:</strong> {row.status}</p>
                                     <p><strong>שנת תקציב:</strong> {row.fiscal_year}</p>
                                     {row.tabar_id && <p><strong>תב"ר מקושר:</strong> {row.tabar_id}</p>}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                             </div>
                           </td>
                           <td className="p-4">
@@ -911,7 +917,7 @@ export default function BudgetItemsReport() {
                               <div className="flex items-center gap-2">
                                 <span className={`font-bold ${utilizationStatus.color}`}>
                                   {utilization.toFixed(1)}%
-                                </span>
+                              </span>
                                 <Badge variant={utilizationStatus.badge} className="text-xs">
                                   {utilizationStatus.label}
                                 </Badge>

@@ -23,7 +23,7 @@ export function OpenAIStatus() {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/openai-status');
+      const response = await fetch('/api/smart-query/openai-status');
       const data = await response.json();
       
       if (data.success) {

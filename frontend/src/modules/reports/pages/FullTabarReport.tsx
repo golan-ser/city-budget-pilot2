@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,10 +17,21 @@ import {
   Mail,
   Plus,
   Eye,
-  EyeOff
+  EyeOff,
+  Download,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Info,
+  ArrowLeft,
+  RefreshCw,
+  Building,
+  Calendar,
+  DollarSign
 } from "lucide-react";
 import pdfIcon from "@/assets/PDF.png";
 import excelIcon from "@/assets/Excel.svg";
+import { useNavigate } from "react-router-dom";
 
 interface TabarItem {
   id: number;
@@ -66,6 +75,7 @@ export default function FullTabarReport() {
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'asc' });
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   // Load filters from localStorage
   useEffect(() => {
@@ -156,49 +166,40 @@ export default function FullTabarReport() {
     setExpandedRows(newExpanded);
   };
 
-  const exportAsPDF = () => {
-    const doc = new jsPDF('landscape');
-    doc.setFont("helvetica");
-    doc.setFontSize(18);
-    doc.text("דוח תב\"רים מלא", 14, 20);
-    
-    doc.setFontSize(12);
-    doc.text(`נוצר בתאריך: ${new Date().toLocaleDateString("he-IL")}`, 14, 35);
-    doc.text(`סה\"כ תקציב: ${totalBudget.toLocaleString()} ₪`, 14, 45);
-    doc.text(`סה\"כ בוצע: ${totalSpent.toLocaleString()} ₪`, 14, 55);
-
-    const tableData = sortedData.map(row => [
-      row.tabar_number,
-      row.name,
-      row.year.toString(),
-      row.ministry,
-      row.status,
-      Number(row.budget).toLocaleString(),
-      Number(row.spent).toLocaleString(),
-      `${((row.spent / row.budget) * 100).toFixed(1)}%`,
-      new Date(row.open_date).toLocaleDateString("he-IL")
-    ]);
-
-    autoTable(doc, {
-      head: [["מס' תב\"ר", "שם תב\"ר", "שנה", "משרד", "סטטוס", "תקציב", "בוצע", "אחוז ניצול", "תאריך פתיחה"]],
-      body: tableData,
-      startY: 65,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 15 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 25 },
-        6: { cellWidth: 25 },
-        7: { cellWidth: 20 },
-        8: { cellWidth: 25 }
+  const exportAsPDF = async () => {
+    try {
+      setExportingPDF(true);
+      
+      // בניית URL עם פרמטרים
+      const params = new URLSearchParams();
+      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
+      if (filters.year && filters.year !== 'all') params.append('year', filters.year);
+      
+      const apiUrl = '';
+      const response = await fetch(`${apiUrl}/api/reports/full-tabar/export-pdf?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
-
-    doc.save("full_tabar_report.pdf");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `full-tabar-report-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF exported successfully');
+    } catch (error) {
+      console.error('❌ Error exporting PDF:', error);
+      alert('שגיאה בייצוא PDF: ' + error.message);
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   const exportAsExcel = () => {
@@ -247,7 +248,7 @@ export default function FullTabarReport() {
       return acc;
     }, {} as Record<string, string>);
 
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
+          fetch(`/api/report-schemas/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -398,10 +399,11 @@ export default function FullTabarReport() {
                       variant="outline"
                       size="sm"
                       onClick={exportAsPDF}
-                      className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200"
+                      disabled={exportingPDF}
+                      className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200 disabled:opacity-50"
                     >
                       <img src={pdfIcon} alt="PDF" className="w-5 h-5" />
-                      ייצוא PDF
+                      {exportingPDF ? 'מייצא...' : 'ייצוא PDF'}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

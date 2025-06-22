@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Filter, ArrowLeft, Search } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface TabarItem {
@@ -35,6 +34,7 @@ export default function TabarBudgetReport() {
   const [sortConfig, setSortConfig] = useState<{key: string | null, direction: 'asc' | 'desc'}>({ key: null, direction: 'asc' });
   const [columnFilters, setColumnFilters] = useState<any>({});
   const [globalSearch, setGlobalSearch] = useState('');
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -174,45 +174,54 @@ export default function TabarBudgetReport() {
     return new Date(dateString).toLocaleDateString("he-IL");
   };
 
-  const exportAsPDF = () => {
+  const exportAsPDF = async () => {
     if (!sortedAndFilteredData || sortedAndFilteredData.length === 0) {
       alert('אין נתונים לייצוא');
       return;
     }
 
-    const doc = new jsPDF();
-    doc.setFont("helvetica");
-    doc.setFontSize(16);
-    doc.text("דוח תב\"רים", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`נוצר בתאריך: ${new Date().toLocaleDateString("he-IL")}`, 14, 25);
-
-    const tableData = sortedAndFilteredData.map(row => [
-      row.tabar_number,
-      row.name,
-      row.year,
-      row.status,
-      row.ministry,
-      formatCurrency(row.total_authorized),
-      formatDate(row.open_date),
-      row.permission_number || '-'
-    ]);
-
-    autoTable(doc, {
-      head: [["מספר תב\"ר", "שם פרויקט", "שנה", "סטטוס", "משרד", "תקציב מאושר", "תאריך פתיחה", "מספר הרשאה"]],
-      body: tableData,
-      startY: 35,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [41, 128, 185] },
-    });
-
-    // Add summary
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.text(`סה"כ תקציבים: ${formatCurrency(totalBudget)}`, 14, finalY);
-    doc.text(`מספר תב"רים: ${sortedAndFilteredData.length}`, 14, finalY + 10);
-
-    doc.save("tabar_budget_report.pdf");
+    try {
+      setExportingPDF(true);
+      
+      // בניית URL עם פרמטרים
+      const params = new URLSearchParams();
+      
+      // הוספת פילטרי עמודות
+      Object.keys(columnFilters).forEach(key => {
+        if (columnFilters[key]) {
+          params.append(key, columnFilters[key]);
+        }
+      });
+      
+      // הוספת חיפוש גלובלי
+      if (globalSearch) {
+        params.append('search', globalSearch);
+      }
+      
+      const apiUrl = '';
+      const response = await fetch(`${apiUrl}/api/reports/tabar-budget/export-pdf?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tabar-budget-report-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF exported successfully');
+    } catch (error) {
+      console.error('❌ Error exporting PDF:', error);
+      alert('שגיאה בייצוא PDF: ' + error.message);
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   const exportAsExcel = () => {
@@ -256,7 +265,7 @@ export default function TabarBudgetReport() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
+          fetch(`/api/report-schemas/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -359,8 +368,13 @@ export default function TabarBudgetReport() {
           <Button variant="default" onClick={exportAsExcel} className="bg-green-600 hover:bg-green-700 text-white">
             ייצוא Excel
           </Button>
-          <Button variant="default" onClick={exportAsPDF} className="bg-red-600 hover:bg-red-700 text-white">
-            ייצוא PDF
+          <Button 
+            variant="default" 
+            onClick={exportAsPDF} 
+            disabled={exportingPDF}
+            className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+          >
+            {exportingPDF ? 'מייצא...' : 'ייצוא PDF'}
           </Button>
           
           {(Object.keys(columnFilters).some(key => columnFilters[key]) || globalSearch) && (

@@ -11,7 +11,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// מייצא אובייקט עם פונקציה query
+// מייצא גם את ה-pool וגם אובייקט עם פונקציה query
 export default {
   query: (text, params) => pool.query(text, params),
+  pool: pool, // מייצא את ה-pool עצמו
 };
+
+export { pool }; // מייצא גם בצורה נפרדת

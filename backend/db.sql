@@ -4,14 +4,61 @@ CREATE TABLE IF NOT EXISTS projects (
     name TEXT NOT NULL,
     type TEXT CHECK (type IN ('תבר', 'קול קורא')),
     department_id INTEGER,
+    tabar_id INTEGER REFERENCES tabarim(id),
     start_date DATE,
     end_date DATE,
     budget_amount NUMERIC,
     status TEXT DEFAULT 'טיוטה',
-    created_at TIMESTAMP DEFAULT NOW()
+    description TEXT,
+    managers TEXT[], -- מערך של אנשי קשר
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- דיווחים
+-- אבני דרך מעודכנות
+CREATE TABLE IF NOT EXISTS milestones (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    due_date DATE,
+    status TEXT DEFAULT 'לא התחיל' CHECK (status IN ('לא התחיל', 'בתהליך', 'הושלם', 'מתעכב')),
+    responsible TEXT,
+    completion_percent NUMERIC(5,2) DEFAULT 0 CHECK (completion_percent >= 0 AND completion_percent <= 100),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- מסמכי פרויקט מעודכנים
+CREATE TABLE IF NOT EXISTS project_documents (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- כתב התחייבות, מפרט, וכו'
+    name TEXT NOT NULL,
+    is_required BOOLEAN DEFAULT FALSE,
+    upload_date TIMESTAMP,
+    file_url TEXT,
+    status TEXT DEFAULT 'חסר' CHECK (status IN ('חסר', 'הועלה', 'אושר', 'נדחה')),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- דיווחי ביצוע
+CREATE TABLE IF NOT EXISTS execution_reports (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    report_date DATE NOT NULL,
+    amount NUMERIC(15,2) NOT NULL,
+    status TEXT DEFAULT 'ממתין לאישור' CHECK (status IN ('ממתין לאישור', 'אושר', 'נדחה', 'הועבר')),
+    notes TEXT,
+    documents_attached TEXT[], -- מערך של URLs למסמכים
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- דיווחים (קיים - מעודכן)
 CREATE TABLE IF NOT EXISTS reports (
     id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id),
@@ -19,10 +66,24 @@ CREATE TABLE IF NOT EXISTS reports (
     status TEXT DEFAULT 'טיוטה',
     notes TEXT,
     created_by INTEGER,
-    created_at TIMESTAMP DEFAULT NOW()
+    order_id TEXT,
+    order_description TEXT,
+    amount NUMERIC(15,2),
+    budget_item_id INTEGER,
+    budget_item_name TEXT,
+    supply_date DATE,
+    supply_location TEXT,
+    contract_id TEXT,
+    quote TEXT,
+    ministry_id INTEGER,
+    tabar_id INTEGER,
+    project_stage TEXT,
+    requesting_department_id INTEGER,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- מסמכים
+-- מסמכים (קיים - משאיר לתאימות לאחור)
 CREATE TABLE IF NOT EXISTS documents (
     id SERIAL PRIMARY KEY,
     report_id INTEGER REFERENCES reports(id),
@@ -30,16 +91,6 @@ CREATE TABLE IF NOT EXISTS documents (
     file_path TEXT NOT NULL,
     uploaded_by INTEGER,
     uploaded_at TIMESTAMP DEFAULT NOW()
-);
-
--- אבני דרך
-CREATE TABLE IF NOT EXISTS milestones (
-    id SERIAL PRIMARY KEY,
-    project_id INTEGER REFERENCES projects(id),
-    title TEXT NOT NULL,
-    due_date DATE,
-    status TEXT DEFAULT 'לא התחיל',
-    description TEXT
 );
 
 -- תגובות/הערות

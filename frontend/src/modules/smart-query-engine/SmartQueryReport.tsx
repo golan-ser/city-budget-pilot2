@@ -40,6 +40,10 @@ export default function SmartQueryReport() {
       }
       
       if (result.stage === 'complete' && result.queryResult) {
+        console.log('🔍 Backend Result Data:', result.queryResult);
+        console.log('🔍 Rows:', result.queryResult.rows);
+        console.log('🔍 Summary:', result.queryResult.summary);
+        
         // Convert the new format to the old format for compatibility
         const convertedResult: QueryResult = {
           data: result.queryResult.rows,
@@ -50,6 +54,7 @@ export default function SmartQueryReport() {
           executionTime: parseInt(result.processingTime?.replace('ms', '') || '0')
         };
         
+        console.log('🔍 Converted Result:', convertedResult);
         setQueryResult(convertedResult);
         return;
       }
@@ -93,7 +98,7 @@ export default function SmartQueryReport() {
         }
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/report-schemas/run`, {
+              const response = await fetch(`/api/report-schemas/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiQuery)
@@ -291,7 +296,25 @@ export default function SmartQueryReport() {
   };
 
   const currentDomain = queryResult?.parsed.domain;
-  const currentFields = currentDomain ? cityBudgetSchema.domains.find(d => d.key === currentDomain)?.fields || [] : [];
+  // Use fields from server response instead of local schema
+  const currentFields = queryResult?.data && Array.isArray(queryResult.data) && queryResult.data.length > 0 
+    ? Object.keys(queryResult.data[0]).map(key => ({
+        key,
+        label: key,
+        type: 'text',
+        format: key.includes('budget') || key.includes('authorized') || key.includes('utilized') ? 'currency' : 
+               key.includes('percent') || key.includes('utilization') ? 'percentage' : 'text'
+      }))
+    : (currentDomain ? cityBudgetSchema.domains.find(d => d.key === currentDomain)?.fields || [] : []);
+
+  // Debug logging
+  console.log('🔍 SmartQueryReport Debug:', {
+    hasQueryResult: !!queryResult,
+    queryResultData: queryResult?.data,
+    dataLength: queryResult?.data?.length,
+    currentFields,
+    firstDataItem: queryResult?.data?.[0]
+  });
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

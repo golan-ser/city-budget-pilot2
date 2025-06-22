@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דוח פרויקט - בדיקת עיצוב</title>
+    <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Alef', 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 30px;
+            background-color: #ffffff;
+            color: #333333;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .money {
+            text-align: right;
+            font-weight: bold;
+            color: #1976d2;
+            direction: rtl;
+            font-family: 'Alef', Arial, sans-serif;
+        }
+
+        .header-bar {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .header-bar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            direction: rtl;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            direction: rtl;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-right: 4px solid #1976d2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .info-card .label {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .info-card .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1976d2;
+            direction: rtl;
+            text-align: right;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            direction: rtl;
+        }
+
+        th {
+            background-color: #f1f1f1;
+            color: #333;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 13px;
+            text-align: right;
+            direction: rtl;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            text-align: right;
+            direction: rtl;
+            line-height: 1.4;
+        }
+
+        .money-column {
+            text-align: right;
+            font-weight: bold;
+            color: #1976d2;
+            direction: rtl;
+        }
+
+        .rtl-text {
+            direction: rtl;
+            text-align: right;
+            unicode-bidi: embed;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        h2 {
+            font-size: 20px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            direction: rtl;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <h1>פרויקט דוגמה (תב"ר 2024-001)</h1>
+        <p>שנה: 2024 | סטטוס: פעיל | משרד: משרד הפנים</p>
+    </div>
+
+    <div class="section">
+        <h2>💰 סיכום תקציבי</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">תקציב מאושר</div>
+                <div class="value money">₪1,500,000</div>
+            </div>
+            <div class="info-card">
+                <div class="label">ניצול בפועל</div>
+                <div class="value money">₪850,000</div>
+            </div>
+            <div class="info-card">
+                <div class="label">יתרה</div>
+                <div class="value money">₪650,000</div>
+            </div>
+            <div class="info-card">
+                <div class="label">אחוז ניצול</div>
+                <div class="value">57%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 פרטי תקציב</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>פרט</th>
+                    <th>ערך</th>
+                    <th>הערות</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="rtl-text"><strong>תקציב מאושר</strong></td>
+                    <td class="money-column">₪1,500,000</td>
+                    <td class="rtl-text">תקציב מלא מהמשרד</td>
+                </tr>
+                <tr>
+                    <td class="rtl-text"><strong>ניצול בפועל</strong></td>
+                    <td class="money-column">₪850,000</td>
+                    <td class="rtl-text">סכום שנוצל עד כה</td>
+                </tr>
+                <tr>
+                    <td class="rtl-text"><strong>יתרה</strong></td>
+                    <td class="money-column">₪650,000</td>
+                    <td class="rtl-text">סכום שנותר לניצול</td>
+                </tr>
+                <tr>
+                    <td class="rtl-text"><strong>אחוז ניצול</strong></td>
+                    <td class="rtl-text">57%</td>
+                    <td class="rtl-text">יעילות תקציבית טובה</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>✅ בדיקות עיצוב</h2>
+        <ul style="list-style: none; padding-right: 20px;">
+            <li style="margin-bottom: 8px;">✅ כיווניות RTL - כל התוכן מיושר לימין</li>
+            <li style="margin-bottom: 8px;">✅ סכומים כספיים - מוצגים עם פסיקים ו-₪</li>
+            <li style="margin-bottom: 8px;">✅ גופן עברי - Alef מ-Google Fonts</li>
+            <li style="margin-bottom: 8px;">✅ טבלאות - כותרות אפורות, יישור לימין</li>
+            <li style="margin-bottom: 8px;">✅ עיצוב מקצועי - צללים, צבעים, ריווח</li>
+        </ul>
+    </div>
+
+    <footer style="text-align: center; margin-top: 40px; padding: 20px; background-color: #f5f5f5; border-radius: 6px;">
+        <strong>מערכת ניהול פרויקטים | משרד הפנים</strong><br>
+        דוח בדיקה - הופק בתאריך: 19/06/2025
+    </footer>
+</body>
+</html> 
