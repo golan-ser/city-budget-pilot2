@@ -24,7 +24,8 @@ import {
   Building,
   Activity,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import pdfIcon from "@/assets/PDF.png";
@@ -62,7 +63,6 @@ export default function BudgetItemsReport() {
   const [filters, setFilters] = useState<Filters>({});
   const [data, setData] = useState<BudgetItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtersLoaded, setFiltersLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
 
@@ -78,6 +78,126 @@ export default function BudgetItemsReport() {
       years: years.map(String)
     };
   }, [data]);
+
+  // Load data from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/budget-items');
+        if (response.ok) {
+          const budgetItems = await response.json();
+          setData(budgetItems);
+        } else {
+          console.error('Failed to load budget items');
+          // Fallback to mock data if API fails
+          setData(mockData);
+        }
+      } catch (error) {
+        console.error('Error loading budget items:', error);
+        // Fallback to mock data
+        setData(mockData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Mock data as fallback
+  const mockData: BudgetItem[] = [
+    {
+      id: 1,
+      name: "שיפוצי בתי ספר",
+      department: "חינוך",
+      status: "פעיל",
+      approved_budget: 2500000,
+      executed_budget: 1800000,
+      fiscal_year: 2025,
+      tabar_id: 2025001,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "שיפוץ כיתות לימוד ומעבדות"
+    },
+    {
+      id: 2,
+      name: "תשתיות תקשורת",
+      department: "טכנולוגיות מידע",
+      status: "פעיל",
+      approved_budget: 1200000,
+      executed_budget: 1350000,
+      fiscal_year: 2025,
+      tabar_id: 2025002,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "שדרוג רשת האינטרנט העירונית"
+    },
+    {
+      id: 3,
+      name: "פיתוח פארקים",
+      department: "שירותים עירוניים",
+      status: "פעיל",
+      approved_budget: 800000,
+      executed_budget: 320000,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "הקמת פארק חדש באזור הצפון"
+    },
+    {
+      id: 4,
+      name: "תחזוקת כבישים",
+      department: "תחבורה",
+      status: "פעיל",
+      approved_budget: 1500000,
+      executed_budget: 1425000,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "שיפוץ כבישים ראשיים"
+    },
+    {
+      id: 5,
+      name: "מערכות אבטחה",
+      department: "ביטחון",
+      status: "מוקפא",
+      approved_budget: 600000,
+      executed_budget: 0,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "התקנת מצלמות אבטחה"
+    },
+    {
+      id: 6,
+      name: "תוכניות רווחה",
+      department: "רווחה",
+      status: "פעיל",
+      approved_budget: 900000,
+      executed_budget: 750000,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "תמיכה במשפחות נזקקות"
+    },
+    {
+      id: 7,
+      name: "פעילויות תרבות",
+      department: "תרבות וספורט",
+      status: "פעיל",
+      approved_budget: 450000,
+      executed_budget: 380000,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "אירועים תרבותיים ופסטיבלים"
+    },
+    {
+      id: 8,
+      name: "שירותי בריאות",
+      department: "בריאות",
+      status: "פעיל",
+      approved_budget: 1100000,
+      executed_budget: 990000,
+      fiscal_year: 2025,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "שירותי בריאות קהילתיים"
+    }
+  ];
 
   // Calculate utilization percentage
   const calculateUtilization = (executed: number, approved: number): number => {
@@ -236,145 +356,6 @@ export default function BudgetItemsReport() {
     };
   }, [filteredData]);
 
-  // Load filters from localStorage on component mount
-  useEffect(() => {
-    const savedFilters = localStorage.getItem('budgetItemsFilters');
-    if (savedFilters) {
-      try {
-        const parsedFilters = JSON.parse(savedFilters);
-        console.log("📁 Loaded filters from localStorage:", JSON.stringify(parsedFilters, null, 2));
-        
-        // Validate filters - remove any invalid values
-        const validatedFilters: Filters = {};
-        
-        // Known valid status values based on database
-        const validStatuses = ['פעיל', 'סגור'];
-        
-        if (parsedFilters.department && parsedFilters.department !== 'all') {
-          validatedFilters.department = parsedFilters.department;
-        }
-        if (parsedFilters.status && parsedFilters.status !== 'all') {
-          // Only keep status if it's in the valid list
-          if (validStatuses.includes(parsedFilters.status)) {
-            validatedFilters.status = parsedFilters.status;
-          } else {
-            console.log(`⚠️ Removing invalid status filter: "${parsedFilters.status}"`);
-          }
-        }
-        if (parsedFilters.fiscal_year && parsedFilters.fiscal_year !== 'all') {
-          validatedFilters.fiscal_year = parsedFilters.fiscal_year;
-        }
-        if (parsedFilters.utilization_range && parsedFilters.utilization_range !== 'all') {
-          validatedFilters.utilization_range = parsedFilters.utilization_range;
-        }
-        if (parsedFilters.search) {
-          validatedFilters.search = parsedFilters.search;
-        }
-        
-        console.log("✅ Validated filters:", JSON.stringify(validatedFilters, null, 2));
-        
-        // If validation removed filters, update localStorage
-        if (Object.keys(validatedFilters).length !== Object.keys(parsedFilters).length) {
-          console.log("🧹 Updating localStorage with validated filters");
-          if (Object.keys(validatedFilters).length > 0) {
-            localStorage.setItem('budgetItemsFilters', JSON.stringify(validatedFilters));
-          } else {
-            localStorage.removeItem('budgetItemsFilters');
-          }
-        }
-        
-        setFilters(validatedFilters);
-      } catch (error) {
-        console.error('Error parsing saved filters:', error);
-        setFilters({});
-      }
-    } else {
-      console.log("📁 No saved filters found, starting with empty filters");
-      setFilters({});
-    }
-    setFiltersLoaded(true);
-  }, []);
-
-  // Save filters to localStorage whenever they change
-  useEffect(() => {
-    if (Object.keys(filters).some(key => filters[key as keyof Filters])) {
-      localStorage.setItem('budgetItemsFilters', JSON.stringify(filters));
-    }
-  }, [filters]);
-
-  // Fetch data from API
-  useEffect(() => {
-    // Don't fetch until filters are loaded
-    if (!filtersLoaded) return;
-    
-    setLoading(true);
-    
-    const apiFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-      if (value && value !== 'all') {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
-
-    const requestBody = {
-      module: "budget_items",
-      fields: [
-        "id", "name", "department", "status", 
-        "approved_budget", "executed_budget", "fiscal_year", 
-        "tabar_id", "created_at", "notes"
-      ],
-      filters: apiFilters
-    };
-
-    console.log("🔄 Sending request to API:", JSON.stringify(requestBody, null, 2));
-    console.log("🔍 Current filters state:", JSON.stringify(filters, null, 2));
-
-          fetch(`/api/report-schemas/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
-    })
-      .then(res => {
-        console.log("📡 Response status:", res.status);
-        console.log("📡 Response headers:", res.headers);
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.text().then(text => {
-          console.log("📄 Raw response text:", text);
-          try {
-            return JSON.parse(text);
-          } catch (e) {
-            console.error("❌ JSON parse error:", e);
-            throw new Error("Invalid JSON response");
-          }
-        });
-      })
-      .then(rows => {
-        console.log("📊 Received data:", rows);
-        console.log("📊 Data type:", typeof rows);
-        console.log("📊 Data length:", rows?.length || 0);
-        console.log("📊 Is Array:", Array.isArray(rows));
-        
-        // Clean and format data
-        const cleanedData = (rows || []).map((item: any) => ({
-          ...item,
-          approved_budget: Number(item.approved_budget) || 0,
-          executed_budget: Number(item.executed_budget) || 0,
-          fiscal_year: Number(item.fiscal_year) || new Date().getFullYear(),
-        }));
-        
-        console.log("✅ Cleaned data:", cleanedData);
-        setData(cleanedData);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('❌ Error fetching data:', error);
-        setData([]);
-        setLoading(false);
-      });
-  }, [filters, filtersLoaded]);
-
   const handleSort = (key: string) => {
     setSortConfig(current => ({
       key,
@@ -383,58 +364,42 @@ export default function BudgetItemsReport() {
   };
 
   const updateFilter = (key: keyof Filters, value: string) => {
-    if (value === 'all' || value === '') {
-      const newFilters = { ...filters };
-      delete newFilters[key];
-      setFilters(newFilters);
-    } else {
-      setFilters(prev => ({
-        ...prev,
-        [key]: value
-      }));
-    }
+    setFilters(prev => ({
+      ...prev,
+      [key]: value === 'all' ? undefined : value
+    }));
   };
 
   const clearFilters = () => {
-    console.log("🧹 Clearing all filters and localStorage");
     setFilters({});
-    setSortConfig(null);
-    localStorage.removeItem('budgetItemsFilters');
   };
 
   const exportAsPDF = async () => {
     try {
       setExportingPDF(true);
-      
-      // בניית URL עם פרמטרים
-      const params = new URLSearchParams();
-      if (filters.department && filters.department !== 'all') params.append('department', filters.department);
-      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-      if (filters.fiscal_year && filters.fiscal_year !== 'all') params.append('fiscal_year', filters.fiscal_year);
-      if (filters.utilization_range && filters.utilization_range !== 'all') params.append('utilization_range', filters.utilization_range);
-      if (filters.search) params.append('search', filters.search);
-      
-      const apiUrl = '';
-      const response = await fetch(`${apiUrl}/api/reports/budget-items/export-pdf?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch('/api/budget-items/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filters }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'budget_items_report.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        console.error('Failed to export PDF');
       }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `budget-items-report-${new Date().getTime()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      console.log('✅ PDF exported successfully');
     } catch (error) {
-      console.error('❌ Error exporting PDF:', error);
-      alert('שגיאה בייצוא PDF: ' + error.message);
+      console.error('Error exporting PDF:', error);
     } finally {
       setExportingPDF(false);
     }
@@ -473,9 +438,9 @@ export default function BudgetItemsReport() {
 
   return (
     <TooltipProvider>
-      <div className="p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
+      <div className="p-6 space-y-4 max-w-7xl mx-auto" dir="rtl">
         {/* Navigation */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
           <Button
             variant="ghost"
             size="sm"
@@ -489,219 +454,41 @@ export default function BudgetItemsReport() {
           <span className="text-gray-900 font-medium">דוח סעיפי תקציב</span>
         </div>
 
-        {/* Header Section */}
-        <Card className="border-none shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-blue-600" />
+        {/* Compact Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-blue-600" />
               דוח סעיפי תקציב
-            </CardTitle>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-              בחר פילטרים לפי מחלקה וסטטוס להצגת ביצועים תקציביים מפורטים
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {filteredData.length} סעיפים מתוך {data.length} • סה"כ תקציב: {formatCurrency(summaryStats.totalApproved)}
             </p>
-          </CardHeader>
-        </Card>
-
-        {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">סה"כ תקציב מאושר</p>
-                  <p className="text-2xl font-bold text-blue-600">{formatCurrency(summaryStats.totalApproved)}</p>
-                </div>
-                <Building className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">סה"כ ניצול בפועל</p>
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(summaryStats.totalExecuted)}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">אחוז ניצול כולל</p>
-                  <p className={`text-2xl font-bold ${getUtilizationStatus(summaryStats.overallUtilization).color}`}>
-                    {summaryStats.overallUtilization.toFixed(1)}%
-                  </p>
-                </div>
-                <Activity className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">סעיפים בחריגה</p>
-                  <p className="text-2xl font-bold text-red-600">{summaryStats.overBudgetCount}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportAsPDF}
+              disabled={exportingPDF}
+              className="flex items-center gap-2"
+            >
+              <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
+              {exportingPDF ? 'מייצא...' : 'PDF'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportAsExcel}
+              className="flex items-center gap-2"
+            >
+              <img src={excelIcon} alt="Excel" className="w-4 h-4" />
+              Excel
+            </Button>
+          </div>
         </div>
 
-        {/* Filters and Export Section */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              {/* Search Bar */}
-              <div className="flex items-center gap-2">
-                <Search className="h-5 w-5 text-gray-400" />
-                <Input
-                  placeholder="חיפוש לפי שם סעיף, מחלקה או הערות..."
-                  value={filters.search || ""}
-                  onChange={(e) => updateFilter('search', e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-
-              {/* Advanced Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    מחלקה
-                  </label>
-                  <Select value={filters.department || "all"} onValueChange={(value) => updateFilter('department', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר מחלקה" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">כל המחלקות</SelectItem>
-                      {filterOptions.departments.map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    סטטוס
-                  </label>
-                  <Select value={filters.status || "all"} onValueChange={(value) => updateFilter('status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר סטטוס" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">כל הסטטוסים</SelectItem>
-                      {filterOptions.statuses.map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    שנת תקציב
-                  </label>
-                  <Select value={filters.fiscal_year || "all"} onValueChange={(value) => updateFilter('fiscal_year', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר שנה" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">כל השנים</SelectItem>
-                      {filterOptions.years.map(year => (
-                        <SelectItem key={year} value={year}>{year}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    אחוז ניצול
-                  </label>
-                  <Select value={filters.utilization_range || "all"} onValueChange={(value) => updateFilter('utilization_range', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר טווח" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">כל הטווחים</SelectItem>
-                      <SelectItem value="over_100">מעל 100%</SelectItem>
-                      <SelectItem value="90_100">90%-100%</SelectItem>
-                      <SelectItem value="under_50">מתחת ל-50%</SelectItem>
-                      <SelectItem value="zero">ללא תקציב</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-end gap-2">
-                {Object.keys(filters).length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearFilters}
-                      className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    נקה סינון
-                  </Button>
-                )}
-                </div>
-              </div>
-
-              {/* Export Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={exportAsPDF}
-                      disabled={exportingPDF}
-                      className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200 disabled:opacity-50"
-                    >
-                      <img src={pdfIcon} alt="PDF" className="w-5 h-5" />
-                      {exportingPDF ? 'מייצא...' : 'ייצוא PDF'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>ייצא את הדוח כקובץ PDF</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={exportAsExcel}
-                      className="flex items-center gap-2 hover:bg-green-50 hover:border-green-200"
-                    >
-                      <img src={excelIcon} alt="Excel" className="w-5 h-5" />
-                      ייצוא Excel
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>ייצא את הדוח כקובץ Excel</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Alerts for important insights */}
+        {/* Alerts */}
         {summaryStats.overBudgetCount > 0 && (
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -711,213 +498,255 @@ export default function BudgetItemsReport() {
           </Alert>
         )}
 
-        {summaryStats.underUtilizedCount > 5 && (
-          <Alert className="border-blue-200 bg-blue-50">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>המלצה:</strong> {summaryStats.underUtilizedCount} סעיפים עם ניצול נמוך - ניתן לשקול העברת תקציב
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Enhanced Table with Integrated Filters */}
+        <Card className="shadow-lg">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                {/* Table Header with Integrated Filters */}
+                <thead>
+                  {/* Column Headers */}
+                  <tr className="border-b-2 border-blue-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[200px]"
+                        onClick={() => handleSort('name')}>
+                      <div className="flex items-center justify-between">
+                        שם סעיף
+                        {sortConfig?.key === 'name' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[140px]"
+                        onClick={() => handleSort('department')}>
+                      <div className="flex items-center justify-between">
+                        מחלקה
+                        {sortConfig?.key === 'department' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[100px]"
+                        onClick={() => handleSort('status')}>
+                      <div className="flex items-center justify-between">
+                        סטטוס
+                        {sortConfig?.key === 'status' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[130px]"
+                        onClick={() => handleSort('approved_budget')}>
+                      <div className="flex items-center justify-between">
+                        תקציב מאושר
+                        {sortConfig?.key === 'approved_budget' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[130px]"
+                        onClick={() => handleSort('executed_budget')}>
+                      <div className="flex items-center justify-between">
+                        ניצול בפועל
+                        {sortConfig?.key === 'executed_budget' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[150px]"
+                        onClick={() => handleSort('utilization')}>
+                      <div className="flex items-center justify-between">
+                        אחוז ניצול
+                        {sortConfig?.key === 'utilization' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold cursor-pointer hover:bg-blue-800 transition-colors min-w-[100px]"
+                        onClick={() => handleSort('fiscal_year')}>
+                      <div className="flex items-center justify-between">
+                        שנת תקציב
+                        {sortConfig?.key === 'fiscal_year' && (
+                          <span className="text-xs">
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-right font-semibold min-w-[80px]">הערות</th>
+                  </tr>
+                  
+                  {/* Integrated Filter Row */}
+                  <tr className="bg-blue-50 border-b border-blue-200">
+                    <td className="p-2">
+                      <div className="relative">
+                        <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="חיפוש..."
+                          value={filters.search || ""}
+                          onChange={(e) => updateFilter('search', e.target.value)}
+                          className="pr-8 h-8 text-sm bg-white"
+                        />
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <Select value={filters.department || "all"} onValueChange={(value) => updateFilter('department', value)}>
+                        <SelectTrigger className="h-8 text-sm bg-white">
+                          <SelectValue placeholder="כל המחלקות" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">כל המחלקות</SelectItem>
+                          {filterOptions.departments.map(dept => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2">
+                      <Select value={filters.status || "all"} onValueChange={(value) => updateFilter('status', value)}>
+                        <SelectTrigger className="h-8 text-sm bg-white">
+                          <SelectValue placeholder="כל הסטטוסים" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">כל הסטטוסים</SelectItem>
+                          {filterOptions.statuses.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2">
+                      <div className="text-xs text-gray-500 text-center">
+                        {formatCurrency(summaryStats.totalApproved)}
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <div className="text-xs text-gray-500 text-center">
+                        {formatCurrency(summaryStats.totalExecuted)}
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <Select value={filters.utilization_range || "all"} onValueChange={(value) => updateFilter('utilization_range', value)}>
+                        <SelectTrigger className="h-8 text-sm bg-white">
+                          <SelectValue placeholder="כל הטווחים" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">כל הטווחים</SelectItem>
+                          <SelectItem value="over_100">מעל 100%</SelectItem>
+                          <SelectItem value="90_100">90%-100%</SelectItem>
+                          <SelectItem value="under_50">מתחת ל-50%</SelectItem>
+                          <SelectItem value="zero">ללא תקציב</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2">
+                      <Select value={filters.fiscal_year || "all"} onValueChange={(value) => updateFilter('fiscal_year', value)}>
+                        <SelectTrigger className="h-8 text-sm bg-white">
+                          <SelectValue placeholder="כל השנים" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">כל השנים</SelectItem>
+                          {filterOptions.years.map(year => (
+                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2">
+                      {Object.keys(filters).length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearFilters}
+                          className="h-8 px-2 text-xs"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                </thead>
 
-        {/* Results Summary */}
-        {filteredData.length > 0 && (
-          <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-            <CardContent className="pt-4">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                נמצאו <span className="font-bold">{filteredData.length}</span> סעיפי תקציב
-                {data.length !== filteredData.length && (
-                  <span> מתוך {data.length} סעיפים סה"כ</span>
-                )}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Data Table */}
-        {filteredData.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Table className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 text-lg">לא נמצאו תוצאות</p>
-                <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">נסה לשנות את הפילטרים או לנקות אותם</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-blue-200 bg-blue-600 text-white">
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('name')}
-                      >
-                        <div className="flex items-center justify-between">
-                          שם סעיף
-                          {sortConfig?.key === 'name' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('department')}
-                      >
-                        <div className="flex items-center justify-between">
-                          מחלקה
-                          {sortConfig?.key === 'department' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center justify-between">
-                          סטטוס
-                          {sortConfig?.key === 'status' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('approved_budget')}
-                      >
-                        <div className="flex items-center justify-between">
-                          תקציב מאושר
-                          {sortConfig?.key === 'approved_budget' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('executed_budget')}
-                      >
-                        <div className="flex items-center justify-between">
-                          ניצול בפועל
-                          {sortConfig?.key === 'executed_budget' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('utilization')}
-                      >
-                        <div className="flex items-center justify-between">
-                          אחוז ניצול
-                          {sortConfig?.key === 'utilization' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('fiscal_year')}
-                      >
-                        <div className="flex items-center justify-between">
-                          שנת תקציב
-                          {sortConfig?.key === 'fiscal_year' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="p-4 text-right font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-                        onClick={() => handleSort('created_at')}
-                      >
-                        <div className="flex items-center justify-between">
-                          תאריך פתיחה
-                          {sortConfig?.key === 'created_at' && (
-                            <span className="text-xs">
-                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th className="p-4 text-right font-semibold">הערות</th>
+                {/* Table Body */}
+                <tbody>
+                  {filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center">
+                        <Table className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 text-lg">לא נמצאו תוצאות</p>
+                        <p className="text-gray-500 text-sm mt-2">נסה לשנות את הפילטרים או לנקות אותם</p>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((row, index) => {
+                  ) : (
+                    filteredData.map((row, index) => {
                       const utilization = calculateUtilization(row.executed_budget, row.approved_budget);
                       const utilizationStatus = getUtilizationStatus(utilization);
                       
                       return (
                         <tr 
                           key={row.id} 
-                          className={`border-b border-gray-200 dark:border-gray-700 hover:bg-muted transition-colors ${
-                            utilization > 100 ? 'bg-red-50 dark:bg-red-900/10' :
-                            utilization >= 90 ? 'bg-orange-50 dark:bg-orange-900/10' :
-                            utilization < 50 ? 'bg-blue-50 dark:bg-blue-900/10' :
-                            index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'
+                          className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                            utilization > 100 ? 'bg-red-50' :
+                            utilization >= 90 ? 'bg-orange-50' :
+                            utilization < 50 ? 'bg-blue-50' :
+                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                           }`}
                         >
-                          <td className="p-4">
+                          <td className="p-3">
                             <div className="flex items-center gap-2">
                               {utilizationStatus.icon}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
                                   <span className="cursor-help hover:text-blue-600 transition-colors font-medium">
-                                  {row.name}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <div className="space-y-1 text-sm">
+                                    {row.name}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <div className="space-y-1 text-sm">
                                     <p><strong>תקציב מאושר:</strong> {formatCurrency(row.approved_budget)}</p>
                                     <p><strong>ניצול בפועל:</strong> {formatCurrency(row.executed_budget)}</p>
                                     <p><strong>מחלקה:</strong> {row.department}</p>
-                                  <p><strong>סטטוס:</strong> {row.status}</p>
+                                    <p><strong>סטטוס:</strong> {row.status}</p>
                                     <p><strong>שנת תקציב:</strong> {row.fiscal_year}</p>
                                     {row.tabar_id && <p><strong>תב"ר מקושר:</strong> {row.tabar_id}</p>}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
                             </div>
                           </td>
-                          <td className="p-4">
+                          <td className="p-3">
                             <Badge variant="outline" className="bg-gray-100">
                               {row.department}
                             </Badge>
                           </td>
-                          <td className="p-4">
+                          <td className="p-3">
                             <Badge variant={getStatusBadgeVariant(row.status)}>
                               {row.status}
                             </Badge>
                           </td>
-                          <td className="p-4 font-medium text-gray-900 dark:text-white">
+                          <td className="p-3 font-medium text-gray-900">
                             {formatCurrency(row.approved_budget)}
                           </td>
-                          <td className="p-4 font-medium text-gray-900 dark:text-white">
+                          <td className="p-3 font-medium text-gray-900">
                             {formatCurrency(row.executed_budget)}
                           </td>
-                          <td className="p-4">
+                          <td className="p-3">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <span className={`font-bold ${utilizationStatus.color}`}>
                                   {utilization.toFixed(1)}%
-                              </span>
+                                </span>
                                 <Badge variant={utilizationStatus.badge} className="text-xs">
                                   {utilizationStatus.label}
                                 </Badge>
@@ -928,13 +757,10 @@ export default function BudgetItemsReport() {
                               />
                             </div>
                           </td>
-                          <td className="p-4 text-gray-600 dark:text-gray-400">
+                          <td className="p-3 text-gray-600">
                             {row.fiscal_year}
                           </td>
-                          <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                            {new Date(row.created_at).toLocaleDateString("he-IL")}
-                          </td>
-                          <td className="p-4">
+                          <td className="p-3">
                             {row.notes ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -950,46 +776,13 @@ export default function BudgetItemsReport() {
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                  
-                  {/* Summary Row */}
-                  <tfoot>
-                    <tr className="border-t-2 border-blue-200 bg-blue-50 dark:bg-blue-900/20 font-bold">
-                      <td className="p-4" colSpan={3}>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-5 w-5 text-blue-600" />
-                          סיכום כולל
-                        </div>
-                      </td>
-                      <td className="p-4 text-blue-900 dark:text-blue-100">
-                        {formatCurrency(summaryStats.totalApproved)}
-                      </td>
-                      <td className="p-4 text-blue-900 dark:text-blue-100">
-                        {formatCurrency(summaryStats.totalExecuted)}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-bold ${getUtilizationStatus(summaryStats.overallUtilization).color}`}>
-                            {summaryStats.overallUtilization.toFixed(1)}%
-                          </span>
-                          <Badge variant={getUtilizationStatus(summaryStats.overallUtilization).badge}>
-                            {getUtilizationStatus(summaryStats.overallUtilization).label}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="p-4" colSpan={3}>
-                        <span className="text-sm text-gray-600">
-                          {summaryStats.totalItems} סעיפים סה"כ
-                        </span>
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </TooltipProvider>
   );

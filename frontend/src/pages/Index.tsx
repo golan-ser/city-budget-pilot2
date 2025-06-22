@@ -2,12 +2,12 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Dashboard from "./Dashboard";
-import Analytics from "./Analytics";
 import Projects from "./Projects";
 import ProjectDetails from "./ProjectDetails";
 import Admin from "./Admin";
 import Tabarim from "./Tabarim";
 import ReportsHome from "@/modules/reports";
+import ReportsManagement from "./ReportsManagement";
 
 // 🆕 דוחות מתוך מודול reports
 import TabarBudgetReport from "../modules/reports/pages/TabarBudgetReport";
@@ -26,7 +26,7 @@ function AppContent() {
     switch (location.pathname) {
       case "/dashboard":
         return "דשבורד";
-      case "/analytics":
+      case "/reports-management":
         return "דיווחים";
       case "/projects":
         return "ניהול פרויקטים";
@@ -68,8 +68,8 @@ function AppContent() {
 
         <div className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/reports-management" element={<ReportsManagement />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/:id" element={<ProjectDetails />} />
             <Route path="/tabarim" element={<Tabarim />} />

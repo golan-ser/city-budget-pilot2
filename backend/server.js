@@ -17,7 +17,7 @@ import dashboardRouter from "./routes/dashboardRoutes.js";
 import enhancedReportsRouter from "./routes/enhancedReportsRoutes.js";
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 3000;
 
 app.use(cors({
   origin: ['http://localhost:8080', 'http://localhost:3000', 'http://localhost:5173'],
@@ -42,6 +42,8 @@ const pool = new pg.Pool({
   connectionString: "postgresql://postgres:Admin0697812@localhost:5432/city_budget",
 });
 app.set("db", pool);
+
+console.log(`🔌 Connecting to DB using URL: postgresql://postgres:Admin0697812@localhost:5432/city_budget`);
 
 // ראוטים
 app.use("/api/report-schemas", reportSchemasRouter);

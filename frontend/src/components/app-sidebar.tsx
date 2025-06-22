@@ -12,7 +12,7 @@ import { useNavigate, useLocation } from "react-router-dom"
 
 const items = [
   { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard },
-  { title: "דיווחים", url: "/analytics", icon: FileText },
+  { title: "דיווחים", url: "/reports-management", icon: FileText },
   { title: "ניהול פרויקטים", url: "/projects", icon: FolderKanban },
   { title: "תב\"רים", url: "/tabarim", icon: FileSpreadsheet },
   { title: "דוחות", url: "/reports", icon: BarChartBig },
