@@ -11,7 +11,10 @@ import {
   Tooltip, 
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  BarChart,
+  Bar,
+  Cell
 } from 'recharts';
 
 interface TrendData {
@@ -19,6 +22,12 @@ interface TrendData {
     month: string;
     monthName: string;
     value: number;
+    formatted: string;
+  }>;
+  monthlyExecution: Array<{
+    month: string;
+    execution: number;
+    projects: number;
     formatted: string;
   }>;
   newProjects: Array<{
@@ -35,13 +44,26 @@ interface TrendData {
   }>;
 }
 
+interface BudgetByMinistry {
+  ministry: string;
+  total_authorized: number;
+  total_executed: number;
+  formatted_authorized: string;
+  formatted_executed: string;
+  utilization_percentage: number;
+}
+
 interface TrendChartsProps {
   data: TrendData;
+  budgetByMinistry?: BudgetByMinistry[];
+  type?: 'default' | 'ministry-comparison' | 'monthly-execution';
   className?: string;
 }
 
 export const TrendCharts: React.FC<TrendChartsProps> = ({
   data,
+  budgetByMinistry = [],
+  type = 'default',
   className = ''
 }) => {
   const [timeRange, setTimeRange] = useState<'monthly' | 'quarterly'>('monthly');
@@ -73,6 +95,185 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   const formatCurrency = (value: number) => `₪${value.toLocaleString('he-IL')}`;
   const formatNumber = (value: number) => value.toLocaleString('he-IL');
 
+  // גרף עמודות - תקציב מול ביצוע לפי משרד
+  if (type === 'ministry-comparison') {
+    if (!budgetByMinistry?.length) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-600 dark:text-gray-400">
+            אין נתוני משרדים להצגה
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart 
+            data={budgetByMinistry} 
+            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            barCategoryGap="20%"
+          >
+            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+            <XAxis 
+              dataKey="ministry" 
+              className="text-xs"
+              tick={{ fontSize: 11 }}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis 
+              className="text-xs"
+              tick={{ fontSize: 11 }}
+              tickFormatter={formatCurrency}
+            />
+            <Tooltip 
+              content={(props) => {
+                if (props.active && props.payload && props.payload.length) {
+                  const data = props.payload[0].payload;
+                  return (
+                    <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                      <p className="font-semibold text-gray-900 dark:text-white mb-2">
+                        {data.ministry}
+                      </p>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-sm text-blue-600">תקציב מאושר:</span>
+                          <span className="text-sm font-medium">{data.formatted_authorized}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-sm text-green-600">ביצוע בפועל:</span>
+                          <span className="text-sm font-medium">{data.formatted_executed}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-sm text-purple-600">אחוז ניצול:</span>
+                          <span className="text-sm font-medium">{data.utilization_percentage}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Bar 
+              dataKey="total_authorized" 
+              fill="#3B82F6" 
+              name="תקציב מאושר"
+              radius={[4, 4, 0, 0]}
+            />
+            <Bar 
+              dataKey="total_executed" 
+              fill="#10B981" 
+              name="ביצוע בפועל"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  // גרף קו - מגמת ביצוע חודשי
+  if (type === 'monthly-execution') {
+    if (!data?.monthlyExecution?.length) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-600 dark:text-gray-400">
+            אין נתוני ביצוע חודשי להצגה
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data.monthlyExecution}>
+              <defs>
+                <linearGradient id="executionGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0.05}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis 
+                dataKey="month" 
+                className="text-xs"
+                tick={{ fontSize: 11 }}
+              />
+              <YAxis 
+                className="text-xs"
+                tick={{ fontSize: 11 }}
+                tickFormatter={formatCurrency}
+              />
+              <Tooltip 
+                content={(props) => {
+                  if (props.active && props.payload && props.payload.length) {
+                    const data = props.payload[0].payload;
+                    return (
+                      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                        <p className="font-semibold text-gray-900 dark:text-white mb-2">
+                          {data.month}
+                        </p>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-indigo-600">ביצוע חודשי:</span>
+                            <span className="text-sm font-medium">{data.formatted}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-gray-600">פרויקטים פעילים:</span>
+                            <span className="text-sm font-medium">{data.projects}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="execution"
+                stroke="#6366F1"
+                strokeWidth={3}
+                fill="url(#executionGradient)"
+                dot={{ fill: '#6366F1', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, fill: '#6366F1', strokeWidth: 2 }}
+                name="ביצוע חודשי"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="text-center p-3 bg-slate-50 rounded-lg">
+            <div className="text-lg font-semibold text-indigo-600">
+              {data.monthlyExecution[data.monthlyExecution.length - 1]?.formatted || '₪0'}
+            </div>
+            <div className="text-xs text-gray-600">החודש הנוכחי</div>
+          </div>
+          <div className="text-center p-3 bg-slate-50 rounded-lg">
+            <div className="text-lg font-semibold text-purple-600">
+              {data.monthlyExecution.reduce((sum, item) => sum + item.execution, 0).toLocaleString('he-IL')}
+            </div>
+            <div className="text-xs text-gray-600">סה"כ 12 חודשים</div>
+          </div>
+          <div className="text-center p-3 bg-slate-50 rounded-lg">
+            <div className="text-lg font-semibold text-green-600">
+              {Math.round(data.monthlyExecution.reduce((sum, item) => sum + item.execution, 0) / data.monthlyExecution.length).toLocaleString('he-IL')}
+            </div>
+            <div className="text-xs text-gray-600">ממוצע חודשי</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // גרף ברירת מחדל - מגמות כלליות
   if (!data || (!data.budgetUtilization?.length && !data.newProjects?.length && !data.executionReports?.length)) {
     return (
       <Card className={className}>
@@ -203,109 +404,30 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     tick={{ fontSize: 12 }}
                   />
                   <YAxis 
-                    yAxisId="count"
-                    orientation="right"
-                    className="text-xs"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={formatNumber}
-                  />
-                  <YAxis 
-                    yAxisId="amount"
-                    orientation="left"
                     className="text-xs"
                     tick={{ fontSize: 12 }}
                     tickFormatter={formatCurrency}
                   />
                   <Tooltip 
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                            <p className="font-semibold text-gray-900 dark:text-white mb-2">
-                              {label}
-                            </p>
-                            <div className="space-y-1">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  מספר דוחות: {data.count}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  סכום: {data.formatted}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
+                    content={<CustomTooltip formatter={formatCurrency} />}
                   />
                   <Line
-                    yAxisId="count"
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#8B5CF6"
-                    strokeWidth={3}
-                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 5 }}
-                    activeDot={{ r: 6, fill: '#8B5CF6' }}
-                    name="מספר דוחות"
-                  />
-                  <Line
-                    yAxisId="amount"
                     type="monotone"
                     dataKey="amount"
                     stroke="#F59E0B"
                     strokeWidth={3}
                     dot={{ fill: '#F59E0B', strokeWidth: 2, r: 5 }}
                     activeDot={{ r: 6, fill: '#F59E0B' }}
-                    name="סכום דוחות"
+                    name="סכום דיווחים"
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
-              דוחות ביצוע מאושרים - 6 חודשים אחרונים
+              סכום דוחות ביצוע - 6 חודשים אחרונים
             </div>
           </TabsContent>
         </Tabs>
-        
-        {/* Summary statistics */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <div className="text-sm font-medium text-blue-900 dark:text-blue-200">
-              ממוצע ניצול חודשי
-            </div>
-            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-              {data.budgetUtilization?.length > 0 
-                ? formatCurrency(data.budgetUtilization.reduce((sum, item) => sum + item.value, 0) / data.budgetUtilization.length)
-                : '₪0'
-              }
-            </div>
-          </div>
-          
-          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-            <div className="text-sm font-medium text-green-900 dark:text-green-200">
-              פרויקטים חדשים (6 חודשים)
-            </div>
-            <div className="text-xl font-bold text-green-700 dark:text-green-300">
-              {data.newProjects?.reduce((sum, item) => sum + item.value, 0) || 0}
-            </div>
-          </div>
-          
-          <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-            <div className="text-sm font-medium text-purple-900 dark:text-purple-200">
-              דוחות ביצוע (6 חודשים)
-            </div>
-            <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
-              {data.executionReports?.reduce((sum, item) => sum + item.count, 0) || 0}
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
