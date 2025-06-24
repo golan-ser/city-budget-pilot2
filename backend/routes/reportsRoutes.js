@@ -23,36 +23,39 @@ import {
   exportFullTabarPDF,
   exportTabarBudgetPDF
 } from '../controllers/reportsPdfController.js';
+// 🔐 SECURITY: Import authentication middleware
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
+// 🔐 SECURITY: All routes require authentication
 // Budget Items routes (must be before other routes to avoid conflicts)
-router.get('/budget-items', getBudgetItems);
-router.post('/budget-items/export-pdf', exportBudgetItemsPDF);
+router.get('/budget-items', auth, getBudgetItems);
+router.post('/budget-items/export-pdf', auth, exportBudgetItemsPDF);
 
 // PDF Export routes from reportsPdfController
-router.get('/full-tabar/export-pdf', exportFullTabarPDF);
-router.get('/tabar-budget/export-pdf', exportTabarBudgetPDF);
+router.get('/full-tabar/export-pdf', auth, exportFullTabarPDF);
+router.get('/tabar-budget/export-pdf', auth, exportTabarBudgetPDF);
 
 // Execution reports routes (must come before generic /:id routes)
-router.get('/execution', getExecutionReports);
-router.get('/execution/:id', getExecutionReportById);
-router.post('/execution', uploadReportFile.single('file'), createExecutionReport);
-router.put('/execution/:id', updateExecutionReport);
-router.delete('/execution/:id', deleteExecutionReport);
+router.get('/execution', auth, getExecutionReports);
+router.get('/execution/:id', auth, getExecutionReportById);
+router.post('/execution', auth, uploadReportFile.single('file'), createExecutionReport);
+router.put('/execution/:id', auth, updateExecutionReport);
+router.delete('/execution/:id', auth, deleteExecutionReport);
 
 // Advanced Reports routes
-router.get('/budget-execution', getBudgetExecutionReport);
-router.get('/invoices', getInvoicesReport);
-router.get('/ministry', getMinistryReport);
-router.get('/cash-flow', getCashFlowReport);
-router.post('/export', exportReportToExcel);
+router.get('/budget-execution', auth, getBudgetExecutionReport);
+router.get('/invoices', auth, getInvoicesReport);
+router.get('/ministry', auth, getMinistryReport);
+router.get('/cash-flow', auth, getCashFlowReport);
+router.post('/export', auth, exportReportToExcel);
 
 // Standard reports routes (these should be last)
-router.get('/', getReports);
-router.get('/:id', getReportById);
-router.post('/', createReport);
-router.put('/:id', updateReport);
-router.delete('/:id', deleteReport);
+router.get('/', auth, getReports);
+router.get('/:id', auth, getReportById);
+router.post('/', auth, createReport);
+router.put('/:id', auth, updateReport);
+router.delete('/:id', auth, deleteReport);
 
 export default router;

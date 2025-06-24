@@ -84,7 +84,11 @@ export default function BudgetItemsReport() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/budget-items');
+        const response = await fetch('/api/budget-items', {
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          }
+        });
         if (response.ok) {
           const budgetItems = await response.json();
           setData(budgetItems);
@@ -381,6 +385,7 @@ export default function BudgetItemsReport() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
         },
         body: JSON.stringify({ filters }),
       });

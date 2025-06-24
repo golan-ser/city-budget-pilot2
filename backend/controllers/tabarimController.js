@@ -6,11 +6,17 @@ import path from 'path';
 // שליפת כל התב"רים (כולל סינון) עם חישוב ניצול מדויק
 export const getAllTabarim = async (req, res) => {
   try {
-    console.log('🔄 Fetching tabarim with precise utilization calculation...');
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    console.log(`🔄 Fetching tabarim for tenant ${tenantId} with precise utilization calculation...`);
     
     const { q, ministry, year, status } = req.query;
     
-    // Query with precise utilization calculation - IDENTICAL to projects controller
+    // 🔐 SECURITY: Query with tenant_id filtering
     let sql = `
       SELECT 
         t.*,
@@ -25,11 +31,11 @@ export const getAllTabarim = async (req, res) => {
           END, 0
         ) as utilization_percentage
       FROM tabarim t
-      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id
-      WHERE 1=1
+      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id AND tt.tenant_id = $1
+      WHERE t.tenant_id = $1
     `;
     
-    const params = [];
+    const params = [tenantId]; // Start with tenant_id as first parameter
     
     if (q) {
       sql += ' AND (CAST(t.tabar_number AS TEXT) ILIKE $' + (params.length + 1) +
@@ -89,16 +95,24 @@ export const getAllTabarim = async (req, res) => {
 // שליפת תב"ר בודד כולל הכל
 export const getTabarDetails = async (req, res) => {
   try {
-    const { id } = req.params;
-    const tabarRes = await pool.query('SELECT * FROM tabarim WHERE id = $1', [id]);
-    if (tabarRes.rows.length === 0)
-      return res.status(404).json({ error: 'Not found' });
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
 
-    const itemsRes = await pool.query('SELECT * FROM tabar_items WHERE tabar_id = $1', [id]);
-    const transRes = await pool.query('SELECT * FROM tabar_transactions WHERE tabar_id = $1 ORDER BY transaction_date DESC', [id]);
-    const permsRes = await pool.query('SELECT * FROM tabar_permissions WHERE tabar_id = $1', [id]);
-    const fundersRes = await pool.query('SELECT * FROM tabar_funding WHERE tabar_id = $1', [id]);
-    const docsRes = await pool.query('SELECT * FROM tabar_documents WHERE tabar_id = $1', [id]);
+    const { id } = req.params;
+    
+    // 🔐 SECURITY: Query with tenant_id filtering
+    const tabarRes = await pool.query('SELECT * FROM tabarim WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
+    if (tabarRes.rows.length === 0)
+      return res.status(404).json({ error: 'Tabar not found or access denied' });
+
+    const itemsRes = await pool.query('SELECT * FROM tabar_items WHERE tabar_id = $1 AND tenant_id = $2', [id, tenantId]);
+    const transRes = await pool.query('SELECT * FROM tabar_transactions WHERE tabar_id = $1 AND tenant_id = $2 ORDER BY transaction_date DESC', [id, tenantId]);
+    const permsRes = await pool.query('SELECT * FROM tabar_permissions WHERE tabar_id = $1 AND tenant_id = $2', [id, tenantId]);
+    const fundersRes = await pool.query('SELECT * FROM tabar_funding WHERE tabar_id = $1 AND tenant_id = $2', [id, tenantId]);
+    const docsRes = await pool.query('SELECT * FROM tabar_documents WHERE tabar_id = $1 AND tenant_id = $2', [id, tenantId]);
 
     res.json({
       tabar: tabarRes.rows[0],
@@ -120,6 +134,12 @@ export const createTabar = async (req, res) => {
   console.log('📋 Request body:', req.body);
   
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const {
       tabar_number, name, year, ministry,
       total_authorized, permission_number, status,
@@ -127,20 +147,20 @@ export const createTabar = async (req, res) => {
       department, additional_funders, municipal_participation
     } = req.body;
 
-    console.log('📋 Extracted data:', { tabar_number, name, year, ministry });
+    console.log(`📋 Creating tabar for tenant ${tenantId}:`, { tabar_number, name, year, ministry });
 
     const totalAuthorizedValue = total_authorized ? Number(total_authorized) : 0;
     const municipalParticipationValue = municipal_participation ? Number(municipal_participation) : 0;
 
-    // יצירת התב"ר
+    // 🔐 SECURITY: Always set tenant_id from authenticated user
     const tabarResult = await pool.query(
-      `INSERT INTO tabarim (tabar_number, name, year, ministry, total_authorized, permission_number, status, open_date, close_date, department, additional_funders, municipal_participation)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      `INSERT INTO tabarim (tabar_number, name, year, ministry, total_authorized, permission_number, status, open_date, close_date, department, additional_funders, municipal_participation, tenant_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [
         tabar_number, name, year, ministry, totalAuthorizedValue,
         permission_number, status, open_date, close_date,
-        department, additional_funders, municipalParticipationValue
+        department, additional_funders, municipalParticipationValue, tenantId
       ]
     );
 
@@ -149,33 +169,35 @@ export const createTabar = async (req, res) => {
 
     console.log('✅ Created tabar with ID:', tabarId);
 
-    // יצירת סעיפי הכנסה והוצאה אוטומטיים
+    // 🔐 SECURITY: Create automatic items with tenant_id
     if (totalAuthorizedValue > 0) {
       // סעיף הכנסה - התקציב המאושר
       await pool.query(
-        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           tabarId,
           'הכנסה',
           `${tabar_number}-INC-001`,
           `הכנסה - ${name}`,
           totalAuthorizedValue,
-          'סעיף הכנסה אוטומטי'
+          'סעיף הכנסה אוטומטי',
+          tenantId
         ]
       );
 
       // סעיף הוצאה - התקציב המאושר
       await pool.query(
-        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           tabarId,
           'הוצאה',
           `${tabar_number}-EXP-001`,
           `הוצאה - ${name}`,
           totalAuthorizedValue,
-          'סעיף הוצאה אוטומטי'
+          'סעיף הוצאה אוטומטי',
+          tenantId
         ]
       );
     }
@@ -183,15 +205,16 @@ export const createTabar = async (req, res) => {
     // אם יש השתתפות עירונית, יוצרים סעיף נפרד
     if (municipalParticipationValue > 0) {
       await pool.query(
-        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO tabar_items (tabar_id, item_type, budget_item_code, budget_item_name, amount, notes, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           tabarId,
           'הכנסה',
           `${tabar_number}-MUN-001`,
           `השתתפות עירונית - ${name}`,
           municipalParticipationValue,
-          'השתתפות עירונית'
+          'השתתפות עירונית',
+          tenantId
         ]
       );
     }

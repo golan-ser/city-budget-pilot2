@@ -14,25 +14,28 @@ import {
   createProjectDocument,
   upload
 } from '../controllers/documentsController.js';
+// 🔐 SECURITY: Import authentication middleware
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
+// 🔐 SECURITY: All routes require authentication
 // Basic project routes
-router.get('/', getAllProjects);
-router.get('/:id', getProjectById);
-router.post('/', createProject);
-router.post('/from-tabar', createProjectFromTabar);
-router.put('/:id', updateProject);
-router.delete('/:id', deleteProject);
+router.get('/', auth, getAllProjects);
+router.get('/:id', auth, getProjectById);
+router.post('/', auth, createProject);
+router.post('/from-tabar', auth, createProjectFromTabar);
+router.put('/:id', auth, updateProject);
+router.delete('/:id', auth, deleteProject);
 
 // Analytics route
-router.get('/:id/analytics', getProjectAnalytics);
+router.get('/:id/analytics', auth, getProjectAnalytics);
 
 // PDF Export route
-router.get('/:id/export-pdf', exportProjectPDF);
+router.get('/:id/export-pdf', auth, exportProjectPDF);
 
 // Document routes for projects
-router.get('/:id/documents', getProjectDocuments);
-router.post('/:id/documents', upload.single('file'), createProjectDocument);
+router.get('/:id/documents', auth, getProjectDocuments);
+router.post('/:id/documents', auth, upload.single('file'), createProjectDocument);
 
 export default router;

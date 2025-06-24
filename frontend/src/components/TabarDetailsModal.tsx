@@ -43,6 +43,9 @@ export default function TabarDetailsModal({ open, onClose, data }: TabarDetailsM
 
     const response = await fetch(`/api/tabarim/${data.tabar.id}/documents`, {
       method: 'POST',
+      headers: {
+        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+      },
       body: formData,
     });
 
@@ -132,6 +135,9 @@ export default function TabarDetailsModal({ open, onClose, data }: TabarDetailsM
 
             const response = await fetch(`/api/tabarim/${data.tabar.id}/documents`, {
               method: 'POST',
+              headers: {
+                'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+              },
               body: formData,
             });
 

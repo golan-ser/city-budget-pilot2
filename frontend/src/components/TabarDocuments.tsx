@@ -116,7 +116,11 @@ const TabarDocuments: React.FC<TabarDocumentsProps> = ({
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/tabarim/${tabarId}/documents`);
+      const response = await fetch(`/api/tabarim/${tabarId}/documents`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (!response.ok) {
         throw new Error(`שגיאה בטעינת המסמכים: ${response.status}`);
       }

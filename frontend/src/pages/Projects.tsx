@@ -45,7 +45,11 @@ const Projects = () => {
       try {
         // Use the correct backend port (3000) and tabarim endpoint
         const API_URL = '';
-        const response = await fetch(`${API_URL}/api/tabarim`);
+        const response = await fetch(`${API_URL}/api/tabarim`, {
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          }
+        });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }

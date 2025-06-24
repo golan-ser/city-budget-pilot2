@@ -69,6 +69,9 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
     try {
       const res = await fetch(`/api/tabarim/ocr`, {
         method: "POST",
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: formData,
       });
       const data = await res.json();
@@ -102,6 +105,9 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
     try {
       const res = await fetch(`/api/tabarim`, {
         method: "POST",
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: formData,
       });
       if (!res.ok) throw new Error("שגיאה ביצירת תב'ר");
@@ -128,6 +134,9 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
       try {
         const resFiles = await fetch(`/api/tabarim/${tabarId}/document`, {
           method: "POST",
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          },
           body: filesFormData,
         });
         if (!resFiles.ok) throw new Error("שגיאה בהעלאת קבצים");
@@ -154,6 +163,7 @@ const CreateTabarModal = ({ open, onClose, onCreated }: Props) => {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
           },
           body: JSON.stringify(projectData),
         });

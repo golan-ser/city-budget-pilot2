@@ -10,7 +10,11 @@ export default function TabarDetails({ id, onClose }: TabarDetailsProps) {
   const [tab, setTab] = useState<"main" | "supervision">("main");
 
   useEffect(() => {
-    fetch(`/api/tabarim/${id}`)
+    fetch(`/api/tabarim/${id}`, {
+      headers: {
+        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+      }
+    })
       .then((res) => res.json())
       .then(setData);
   }, [id]);

@@ -177,7 +177,11 @@ export default function FullTabarReport() {
       if (filters.year && filters.year !== 'all') params.append('year', filters.year);
       
       const apiUrl = '';
-      const response = await fetch(`${apiUrl}/api/reports/full-tabar/export-pdf?${params.toString()}`);
+      const response = await fetch(`${apiUrl}/api/reports/full-tabar/export-pdf?${params.toString()}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -248,10 +252,13 @@ export default function FullTabarReport() {
       return acc;
     }, {} as Record<string, string>);
 
-          fetch(`/api/report-schemas/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+                fetch(`/api/report-schemas/run`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
+        body: JSON.stringify({
         module: "tabar_full",
         fields: [
           "id", "tabar_number", "name", "year", "ministry", "department", "status",

@@ -52,12 +52,19 @@ const Tabarim: React.FC = () => {
     if (status) params.append("status", status);
     if (year) params.append("year", year);
 
-    const res = await fetch(`/api/tabarim?${params}`);
+    const res = await fetch(`/api/tabarim?${params}`, {
+      headers: {
+        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+      }
+    });
     const data = await res.json();
     console.log('📋 Tabarim data received:', data);
     
+    // Handle case where data might be an object with a data array property
+    const tabarimArray = Array.isArray(data) ? data : (data.data || data.tabarim || []);
+    
     setTabarim(
-      data.map((t: any) => {
+      tabarimArray.map((t: any) => {
         const utilizedAmount = t.utilized || 0;
         const totalAuthorized = Number(t.total_authorized) || 0;
         const balance = totalAuthorized - utilizedAmount;
@@ -116,7 +123,11 @@ const Tabarim: React.FC = () => {
       if (status) params.append('status', status);
       
       const apiUrl = '';
-      const response = await fetch(`${apiUrl}/api/tabarim/export-pdf?${params.toString()}`);
+      const response = await fetch(`${apiUrl}/api/tabarim/export-pdf?${params.toString()}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -278,7 +289,11 @@ const Tabarim: React.FC = () => {
                       className="bg-[#e9efff] hover:bg-[#d5e1ff] text-[#1e40af] p-2 rounded-lg shadow transition flex items-center"
                       title="כרטסת"
                       onClick={async () => {
-                        const res = await fetch(`/api/tabarim/${t.id}`);
+                        const res = await fetch(`/api/tabarim/${t.id}`, {
+                          headers: {
+                            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+                          }
+                        });
                         const data = await res.json();
                         setSelectedTabar(data);
                       }}

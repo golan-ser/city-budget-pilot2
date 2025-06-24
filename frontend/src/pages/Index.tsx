@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Routes, Route, useLocation } from "react-router-dom";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "./Dashboard";
 import Projects from "./Projects";
 import ProjectDetails from "./ProjectDetails";
@@ -68,18 +69,18 @@ function AppContent() {
 
         <div className="flex-1 overflow-auto">
           <Routes>
-                        <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/reports-management" element={<ReportsManagement />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:id" element={<ProjectDetails />} />
-            <Route path="/tabarim" element={<Tabarim />} />
-            <Route path="/reports" element={<ReportsHome />} />
-            <Route path="/reports/budget-items" element={<BudgetItemsReport />} />
-            <Route path="/reports/tabar-budget" element={<TabarBudgetReport />} />
-            <Route path="/reports/full-tabar" element={<FullTabarReport />} />
-            <Route path="/reports/smart-query" element={<SmartQueryReport />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/reports-management" element={<ProtectedRoute><ReportsManagement /></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+            <Route path="/tabarim" element={<ProtectedRoute><Tabarim /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><ReportsHome /></ProtectedRoute>} />
+            <Route path="/reports/budget-items" element={<ProtectedRoute><BudgetItemsReport /></ProtectedRoute>} />
+            <Route path="/reports/tabar-budget" element={<ProtectedRoute><TabarBudgetReport /></ProtectedRoute>} />
+            <Route path="/reports/full-tabar" element={<ProtectedRoute><FullTabarReport /></ProtectedRoute>} />
+            <Route path="/reports/smart-query" element={<ProtectedRoute><SmartQueryReport /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           </Routes>
         </div>
       </main>

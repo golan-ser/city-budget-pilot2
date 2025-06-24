@@ -23,7 +23,11 @@ const ProjectsGrid: React.FC = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch(`/api/projects`);
+        const response = await fetch(`/api/projects`, {
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          }
+        });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }

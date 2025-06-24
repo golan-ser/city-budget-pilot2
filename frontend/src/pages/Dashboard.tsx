@@ -1,7 +1,12 @@
 import { EnhancedDashboard } from "@/components/dashboard/EnhancedDashboard"
+import { PermissionGuard } from "@/components/PermissionGuard"
 
 const Dashboard = () => {
-  return <EnhancedDashboard />;
+  return (
+    <PermissionGuard pageId={1}>
+      <EnhancedDashboard />
+    </PermissionGuard>
+  );
 }
 
 export default Dashboard

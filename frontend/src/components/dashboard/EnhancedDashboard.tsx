@@ -113,15 +113,23 @@ export const EnhancedDashboard: React.FC = () => {
         setIsLoading(true);
       }
 
-      // Fetch main dashboard data
-      const response = await fetch('/api/dashboard/enhanced');
+      // Fetch main dashboard data with demo token
+      const response = await fetch('/api/dashboard/enhanced', {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
       }
       const dashboardData = await response.json();
 
       // Fetch additional analytics data
-      const analyticsResponse = await fetch('/api/dashboard/advanced-analytics');
+      const analyticsResponse = await fetch('/api/dashboard/advanced-analytics', {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       let analyticsData = {};
       if (analyticsResponse.ok) {
         analyticsData = await analyticsResponse.json();
@@ -201,6 +209,7 @@ export const EnhancedDashboard: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
         },
       });
 

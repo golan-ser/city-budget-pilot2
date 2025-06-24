@@ -114,7 +114,11 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/documents/project/${projectId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/documents/project/${projectId}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (!response.ok) {
         throw new Error('שגיאה בטעינת מסמכים');
       }

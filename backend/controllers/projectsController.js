@@ -6,9 +6,15 @@ import puppeteer from 'puppeteer';
 
 export const getAllProjects = async (req, res) => {
   try {
-    console.log('🔄 Fetching projects with precise utilization calculation...');
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    console.log(`🔄 Fetching projects for tenant ${tenantId} with precise utilization calculation...`);
     
-    // Precise query with exact utilization calculation from tabar_transactions
+    // 🔐 SECURITY: Query with tenant_id filtering
     const query = `
       SELECT 
         t.id,
@@ -34,14 +40,15 @@ export const getAllProjects = async (req, res) => {
           END, 0
         ) as utilization_percentage_calculated
       FROM tabarim t
-      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id
+      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id AND tt.tenant_id = $1
+      WHERE t.tenant_id = $1
       GROUP BY t.id, t.tabar_number, t.name, t.year, t.ministry, t.total_authorized, 
                t.municipal_participation, t.additional_funders, t.open_date, t.close_date, 
                t.status, t.permission_number, t.department
       ORDER BY t.tabar_number
     `;
 
-    const result = await db.query(query);
+    const result = await db.query(query, [tenantId]);
     console.log(`📊 Found ${result.rows.length} tabarim/projects`);
     
     const projects = result.rows.map(tabar => {
@@ -98,10 +105,16 @@ export const getAllProjects = async (req, res) => {
 
 export const getProjectById = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const tabarId = req.params.id;
-    console.log(`🔍 Fetching project ${tabarId} with precise data...`);
+    console.log(`🔍 Fetching project ${tabarId} for tenant ${tenantId} with precise data...`);
     
-    // שליפת נתוני התב"ר כפרויקט עם חישוב ניצול מדויק
+    // 🔐 SECURITY: Query with tenant_id filtering
     const tabarQuery = `
       SELECT 
         t.*,
@@ -115,12 +128,12 @@ export const getProjectById = async (req, res) => {
           END, 0
         ) as utilization_percentage_calculated
       FROM tabarim t
-      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id
-      WHERE t.id = $1
+      LEFT JOIN tabar_transactions tt ON t.id = tt.tabar_id AND tt.tenant_id = $2
+      WHERE t.id = $1 AND t.tenant_id = $2
       GROUP BY t.id
     `;
     
-    const tabarResult = await db.query(tabarQuery, [tabarId]);
+    const tabarResult = await db.query(tabarQuery, [tabarId, tenantId]);
     
     if (tabarResult.rows.length === 0) {
       return res.status(404).json({ error: 'Project not found' });
@@ -128,21 +141,19 @@ export const getProjectById = async (req, res) => {
     
     const tabar = tabarResult.rows[0];
     
-    // שליפת מקורות מימון
-    const fundingQuery = 'SELECT * FROM tabar_funding WHERE tabar_id = $1';
-    const fundingResult = await db.query(fundingQuery, [tabarId]);
+    // 🔐 SECURITY: All related queries with tenant_id filtering
+    const fundingQuery = 'SELECT * FROM tabar_funding WHERE tabar_id = $1 AND tenant_id = $2';
+    const fundingResult = await db.query(fundingQuery, [tabarId, tenantId]);
     
-    // שליפת מסמכים
-    const documentsQuery = 'SELECT * FROM tabar_documents WHERE tabar_id = $1';
-    const documentsResult = await db.query(documentsQuery, [tabarId]);
+    const documentsQuery = 'SELECT * FROM tabar_documents WHERE tabar_id = $1 AND tenant_id = $2';
+    const documentsResult = await db.query(documentsQuery, [tabarId, tenantId]);
     
-    // שליפת עסקאות
     const transactionsQuery = `
       SELECT * FROM tabar_transactions 
-      WHERE tabar_id = $1 
+      WHERE tabar_id = $1 AND tenant_id = $2
       ORDER BY transaction_date DESC
     `;
-    const transactionsResult = await db.query(transactionsQuery, [tabarId]);
+    const transactionsResult = await db.query(transactionsQuery, [tabarId, tenantId]);
     
     const utilizedAmount = parseFloat(tabar.utilized_amount || 0);
     const totalBudget = parseFloat(tabar.total_authorized || 0);
@@ -204,12 +215,22 @@ export const getProjectById = async (req, res) => {
 };
 
 export const createProject = async (req, res) => {
-  const { name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount } = req.body;
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    const { name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount } = req.body;
+    
+    // 🔐 SECURITY: Always set tenant_id from authenticated user (ignore client input)
     const result = await db.query(
-      'INSERT INTO projects (name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount]
+      'INSERT INTO projects (name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, tenantId]
     );
+    
+    console.log(`✅ Created project for tenant ${tenantId}:`, result.rows[0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating project:', error);
@@ -218,16 +239,27 @@ export const createProject = async (req, res) => {
 };
 
 export const updateProject = async (req, res) => {
-  const { id } = req.params;
-  const { name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, status } = req.body;
   try {
-    const result = await db.query(
-      'UPDATE projects SET name = $1, type = $2, department_id = $3, tabar_id = $4, tabar_number = $5, start_date = $6, end_date = $7, budget_amount = $8, status = $9 WHERE id = $10 RETURNING *',
-      [name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, status, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Project not found' });
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
     }
+
+    const { id } = req.params;
+    const { name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, status } = req.body;
+    
+    // 🔐 SECURITY: Update only projects belonging to user's tenant
+    const result = await db.query(
+      'UPDATE projects SET name = $1, type = $2, department_id = $3, tabar_id = $4, tabar_number = $5, start_date = $6, end_date = $7, budget_amount = $8, status = $9 WHERE id = $10 AND tenant_id = $11 RETURNING *',
+      [name, type, department_id, tabar_id, tabar_number, start_date, end_date, budget_amount, status, id, tenantId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found or access denied' });
+    }
+    
+    console.log(`✅ Updated project ${id} for tenant ${tenantId}`);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating project:', error);
@@ -236,9 +268,23 @@ export const updateProject = async (req, res) => {
 };
 
 export const deleteProject = async (req, res) => {
-  const { id } = req.params;
   try {
-    await db.query('DELETE FROM projects WHERE id = $1', [id]);
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    const { id } = req.params;
+    
+    // 🔐 SECURITY: Delete only projects belonging to user's tenant
+    const result = await db.query('DELETE FROM projects WHERE id = $1 AND tenant_id = $2 RETURNING id', [id, tenantId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found or access denied' });
+    }
+    
+    console.log(`✅ Deleted project ${id} for tenant ${tenantId}`);
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting project:', error);
@@ -251,10 +297,16 @@ export const deleteProject = async (req, res) => {
 // שליפת אבני דרך לפרויקט
 export const getProjectMilestones = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const { id } = req.params;
     const result = await db.query(
-      'SELECT * FROM milestones WHERE project_id = $1 ORDER BY due_date ASC',
-      [id]
+      'SELECT * FROM milestones WHERE project_id = $1 AND tenant_id = $2 ORDER BY due_date ASC',
+      [id, tenantId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -266,10 +318,16 @@ export const getProjectMilestones = async (req, res) => {
 // שליפת מסמכים לפרויקט
 export const getProjectDocuments = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const { id } = req.params;
     const result = await db.query(
-      'SELECT * FROM project_documents WHERE project_id = $1 ORDER BY upload_date DESC',
-      [id]
+      'SELECT * FROM project_documents WHERE project_id = $1 AND tenant_id = $2 ORDER BY upload_date DESC',
+      [id, tenantId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -281,10 +339,16 @@ export const getProjectDocuments = async (req, res) => {
 // שליפת דיווחי ביצוע לפרויקט
 export const getProjectExecutionReports = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const { id } = req.params;
     const result = await db.query(
-      'SELECT * FROM execution_reports WHERE project_id = $1 ORDER BY report_date DESC',
-      [id]
+      'SELECT * FROM execution_reports WHERE project_id = $1 AND tenant_id = $2 ORDER BY report_date DESC',
+      [id, tenantId]
     );
     res.json(result.rows);
   } catch (error) {

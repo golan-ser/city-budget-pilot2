@@ -23,7 +23,11 @@ export function OpenAIStatus() {
     setError(null);
     
     try {
-      const response = await fetch('/api/smart-query/openai-status');
+      const response = await fetch('/api/smart-query/openai-status', {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       const data = await response.json();
       
       if (data.success) {

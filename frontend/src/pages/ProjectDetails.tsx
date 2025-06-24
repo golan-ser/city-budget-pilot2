@@ -126,7 +126,11 @@ const ProjectDetails = () => {
         setLoading(true);
         
         // Fetch main project data
-        const projectResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}`);
+        const projectResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/projects/${id}`, {
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          }
+        });
         if (!projectResponse.ok) {
           throw new Error('Network response was not ok');
         }
@@ -135,7 +139,11 @@ const ProjectDetails = () => {
 
         // Fetch project milestones
         try {
-          const milestonesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/milestones?tabar_number=${id}`);
+          const milestonesResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/milestones?tabar_number=${id}`, {
+            headers: {
+              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+            }
+          });
           if (milestonesResponse.ok) {
             const milestonesData = await milestonesResponse.json();
             setMilestones(milestonesData);
@@ -146,7 +154,11 @@ const ProjectDetails = () => {
 
         // Fetch project documents
         try {
-          const documentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/documents?tabar_number=${id}`);
+          const documentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/documents?tabar_number=${id}`, {
+            headers: {
+              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+            }
+          });
           if (documentsResponse.ok) {
             const documentsData = await documentsResponse.json();
             setDocuments(documentsData);
@@ -157,7 +169,11 @@ const ProjectDetails = () => {
 
         // Fetch execution reports
         try {
-          const reportsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/execution?tabar_number=${id}`);
+          const reportsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/execution?tabar_number=${id}`, {
+            headers: {
+              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+            }
+          });
           if (reportsResponse.ok) {
             const reportsData = await reportsResponse.json();
             setExecutionReports(reportsData);
@@ -168,7 +184,11 @@ const ProjectDetails = () => {
 
         // Fetch smart analytics
         try {
-          const analyticsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/analytics`);
+          const analyticsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/analytics`, {
+            headers: {
+              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+            }
+          });
           if (analyticsResponse.ok) {
             const analyticsData = await analyticsResponse.json();
             setAnalytics(analyticsData);
@@ -220,6 +240,7 @@ const ProjectDetails = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
         },
         body: JSON.stringify({
           ...milestoneData,
@@ -250,6 +271,9 @@ const ProjectDetails = () => {
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/documents`, {
         method: 'POST',
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: documentData,
       });
 
@@ -276,6 +300,9 @@ const ProjectDetails = () => {
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/execution`, {
         method: 'POST',
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: reportData,
       });
 
@@ -316,6 +343,9 @@ const ProjectDetails = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/documents/project/${id}`, {
         method: 'POST',
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: formData,
       });
 
@@ -352,7 +382,11 @@ const ProjectDetails = () => {
   const refreshDocuments = async () => {
     try {
       // רענון מסמכים מהמודול הישן
-      const documentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/documents?tabar_number=${id}`);
+      const documentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/documents?tabar_number=${id}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (documentsResponse.ok) {
         const documentsData = await documentsResponse.json();
         setDocuments(documentsData);
@@ -371,7 +405,11 @@ const ProjectDetails = () => {
     try {
       setExportingPDF(true);
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/export-pdf`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/export-pdf`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to export PDF');
       }
@@ -396,7 +434,11 @@ const ProjectDetails = () => {
 
   const refreshAnalytics = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/analytics`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/analytics`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setAnalytics(data);

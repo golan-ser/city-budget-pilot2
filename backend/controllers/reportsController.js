@@ -38,9 +38,16 @@ export const uploadReportFile = multer({
 // שליפת כל הדוחות (עם אפשרות לסינון)
 export const getReports = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const { status, project_id, ministry_id, year } = req.query;
-    let query = 'SELECT * FROM reports WHERE 1=1';
-    const params = [];
+    let query = 'SELECT * FROM reports WHERE tenant_id = $1';
+    const params = [tenantId];
+    
     if (status) {
       params.push(status);
       query += ` AND status = $${params.length}`;
@@ -70,10 +77,16 @@ export const getReports = async (req, res) => {
 // שליפת דוח בודד
 export const getReportById = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     console.log('🔍 getReportById called with params:', req.params, 'query:', req.query);
     const { id } = req.params;
-    const result = await pool.query('SELECT * FROM reports WHERE id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Report not found' });
+    const result = await pool.query('SELECT * FROM reports WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Report not found or access denied' });
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching report:', error);
@@ -84,27 +97,35 @@ export const getReportById = async (req, res) => {
 // יצירת דוח
 export const createReport = async (req, res) => {
   try {
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
     const {
       project_id, report_date, status, notes, created_by, order_id, order_description, amount,
       budget_item_id, budget_item_name, supply_date, supply_location, contract_id, quote,
       ministry_id, tabar_id, project_stage, requesting_department_id
     } = req.body;
+    
+    // 🔐 SECURITY: Always set tenant_id from authenticated user
     const result = await pool.query(
       `INSERT INTO reports (
         project_id, report_date, status, notes, created_by, order_id, order_description, amount,
         budget_item_id, budget_item_name, supply_date, supply_location, contract_id, quote,
-        ministry_id, tabar_id, project_stage, requesting_department_id
+        ministry_id, tabar_id, project_stage, requesting_department_id, tenant_id
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
         $9, $10, $11, $12, $13, $14,
-        $15, $16, $17, $18
+        $15, $16, $17, $18, $19
       )
       RETURNING *`,
       [
         project_id, report_date, status, notes, created_by, order_id, order_description, amount,
         budget_item_id, budget_item_name, supply_date, supply_location, contract_id, quote,
-        ministry_id, tabar_id, project_stage, requesting_department_id
+        ministry_id, tabar_id, project_stage, requesting_department_id, tenantId
       ]
     );
     res.status(201).json(result.rows[0]);

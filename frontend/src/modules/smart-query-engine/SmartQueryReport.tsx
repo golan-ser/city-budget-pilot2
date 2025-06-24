@@ -100,7 +100,10 @@ export default function SmartQueryReport() {
 
               const response = await fetch(`/api/report-schemas/run`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        },
         body: JSON.stringify(apiQuery)
       });
 

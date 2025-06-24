@@ -85,7 +85,11 @@ const ReportsCenter: React.FC = () => {
   const fetchBudgetExecutionReport = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/reports/budget-execution');
+      const response = await fetch('/api/reports/budget-execution', {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setBudgetExecutionData(data.data);
@@ -105,7 +109,11 @@ const ReportsCenter: React.FC = () => {
       if (dateFrom) params.append('date_from', format(dateFrom, 'yyyy-MM-dd'));
       if (dateTo) params.append('date_to', format(dateTo, 'yyyy-MM-dd'));
       
-      const response = await fetch(`/api/reports/invoices?${params.toString()}`);
+      const response = await fetch(`/api/reports/invoices?${params.toString()}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setInvoicesData(data.data);
@@ -120,7 +128,11 @@ const ReportsCenter: React.FC = () => {
   const fetchMinistryReport = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/reports/ministry');
+      const response = await fetch('/api/reports/ministry', {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setMinistryData(data.data);
@@ -135,7 +147,11 @@ const ReportsCenter: React.FC = () => {
   const fetchCashFlowReport = async (period: string = 'month') => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/reports/cash-flow?period=${period}`);
+      const response = await fetch(`/api/reports/cash-flow?period=${period}`, {
+        headers: {
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setCashFlowData(data.data);
@@ -153,6 +169,7 @@ const ReportsCenter: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
         },
         body: JSON.stringify({
           reportType,
