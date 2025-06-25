@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Secure backend for city budget management system",
   "type": "module",
-  "main": "server.js",
+  "main": "secure_server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node secure_server.js",
+    "dev": "node --watch secure_server.js",
     "test": "node test_security.js"
   },
   "dependencies": {
