@@ -149,22 +149,22 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+            </SelectTrigger>
+            <SelectContent>
                   <SelectItem value="all">כל הסטטוסים</SelectItem>
                   <SelectItem value="active">פעיל</SelectItem>
                   <SelectItem value="inactive">לא פעיל</SelectItem>
                   <SelectItem value="locked">נעול</SelectItem>
-                </SelectContent>
-              </Select>
+            </SelectContent>
+          </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Users Table */}
-      <Card>
-        <CardContent>
+        <Card>
+          <CardContent>
           <div className="space-y-4">
             {filteredUsers.length === 0 ? (
               <div className="text-center py-8">
@@ -189,11 +189,11 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
                     </div>
                     <div className="flex items-center space-x-4">
                       <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                        {user.role_name}
-                      </Badge>
+                            {user.role_name}
+                          </Badge>
                       <Badge variant={user.status === 'active' ? 'default' : 'destructive'}>
-                        {user.status === 'active' ? 'פעיל' : 'לא פעיל'}
-                      </Badge>
+                          {user.status === 'active' ? 'פעיל' : 'לא פעיל'}
+                        </Badge>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" onClick={() => handleUserEdit(user.id)}>
                           <Edit className="h-4 w-4" />
@@ -201,9 +201,9 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
                         <Button size="sm" variant="outline" onClick={() => handlePasswordReset(user.id)}>
                           <Key className="h-4 w-4" />
                         </Button>
-                        <Button 
+                        <Button
                           size="sm" 
-                          variant="outline" 
+                          variant="outline"
                           onClick={() => handleUserLock(user.id)}
                           className={user.status === 'locked' ? 'text-green-600' : 'text-red-600'}
                         >
@@ -216,9 +216,9 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+                </div>
   );
 };
 
@@ -273,7 +273,7 @@ export const UsersManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+                        <div>
               <Label htmlFor="system">מערכת</Label>
               <Select value={selectedSystem?.toString()} onValueChange={(value) => setSelectedSystem(Number(value))}>
                 <SelectTrigger>
@@ -367,11 +367,11 @@ export const UsersManagement = () => {
               <Button variant="outline">
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 ייצוא Excel
-              </Button>
+            </Button>
               <Button variant="outline">
                 <FileText className="h-4 w-4 mr-2" />
                 ייצוא PDF
-              </Button>
+            </Button>
             </div>
           </div>
           <UserPermissionsMatrix />

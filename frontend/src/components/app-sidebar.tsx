@@ -100,36 +100,36 @@ export function AppSidebar() {
             {!isCollapsed && <span className="text-sm">טוען הרשאות...</span>}
           </div>
         ) : (
-          <nav className="space-y-2">
+        <nav className="space-y-2">
             {visibleItems.length === 0 ? (
               <div className="text-center text-slate-400 py-4">
                 {!isCollapsed && <span className="text-sm">אין הרשאות זמינות</span>}
               </div>
             ) : (
               visibleItems.map((item, index) => {
-                const Icon = item.icon
-                const active = isActive(item.url)
-                
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleNavigation(item.url)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-right ${
-                      active 
-                        ? 'bg-blue-600 text-white' 
-                        : 'hover:bg-slate-700 text-slate-200'
-                    } ${isCollapsed ? 'justify-center' : 'justify-start'}`}
-                    title={isCollapsed ? item.title : undefined}
-                  >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="flex-1 text-right">{item.title}</span>
-                    )}
-                  </button>
-                )
+            const Icon = item.icon
+            const active = isActive(item.url)
+            
+            return (
+              <button
+                key={index}
+                onClick={() => handleNavigation(item.url)}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-right ${
+                  active 
+                    ? 'bg-blue-600 text-white' 
+                    : 'hover:bg-slate-700 text-slate-200'
+                } ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+                title={isCollapsed ? item.title : undefined}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {!isCollapsed && (
+                  <span className="flex-1 text-right">{item.title}</span>
+                )}
+              </button>
+            )
               })
             )}
-          </nav>
+        </nav>
         )}
 
         {/* Logout Button */}

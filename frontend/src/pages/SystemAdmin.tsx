@@ -24,7 +24,7 @@ const OverviewDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-
+      
       const statsResponse = await fetch('http://localhost:3000/api/admin/statistics', {
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
@@ -123,8 +123,8 @@ const OverviewDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">טוען נתונים...</p>
         </div>
@@ -310,16 +310,16 @@ const SystemAdmin = () => {
           <OverviewDashboard />
         </TabsContent>
         <TabsContent value="tenants" className="space-y-6">
-          <TenantsManagement />
+            <TenantsManagement />
         </TabsContent>
         <TabsContent value="systems" className="space-y-6">
-          <SystemsManagement />
+            <SystemsManagement />
         </TabsContent>
         <TabsContent value="users" className="space-y-6">
-          <UsersManagement />
+            <UsersManagement />
         </TabsContent>
         <TabsContent value="logs" className="space-y-6">
-          <AuditLog />
+            <AuditLog />
         </TabsContent>
       </Tabs>
     </div>

@@ -12,8 +12,8 @@ const getHeaders = (additionalHeaders: Record<string, string> = {}) => {
   return {
     'x-demo-token': token, // Keep using x-demo-token header for compatibility
     'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-    ...additionalHeaders
+  'Content-Type': 'application/json',
+  ...additionalHeaders
   };
 };
 
