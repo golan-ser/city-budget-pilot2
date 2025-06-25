@@ -44,7 +44,7 @@ setTimeout(() => {
         console.log(`${row.name}: ${row.type} ${row.notnull ? 'NOT NULL' : ''} ${row.dflt_value ? `DEFAULT ${row.dflt_value}` : ''}`);
       });
     }
-    
+
     db.close((err) => {
       if (err) {
         console.error('Error closing database:', err);
@@ -53,4 +53,4 @@ setTimeout(() => {
       }
     });
   });
-}, 1000); 
+}, 1000);
