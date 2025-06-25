@@ -1,5 +1,5 @@
 import db from '../db.js';
-import puppeteer from 'puppeteer';
+//import puppeteer from 'puppeteer';
 
 // ==================================================
 // ניהול רשויות (Tenants Management)
