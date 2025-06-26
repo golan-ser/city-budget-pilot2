@@ -25,77 +25,8 @@ import { TrendCharts } from './TrendCharts';
 import { SmartAlerts } from './SmartAlerts';
 import { ProjectStatusChart } from './ProjectStatusChart';
 
-interface DashboardData {
-  kpis: {
-    totalBudget: { value: number; formatted: string; trend: number };
-    utilizedBudget: { value: number; formatted: string; percentage: number; trend: number };
-    monthlyRevenue: { value: number; formatted: string; trend: number };
-    completedProjects: { value: number; percentage: number; trend: number };
-    activeProjects: { value: number; trend: number };
-    pendingApprovals: { value: number; urgent: number };
-  };
-  projectStatus: Array<{
-    status: string;
-    count: number;
-    percentage: number;
-    total_budget: number;
-    formatted_budget: string;
-    color: string;
-  }>;
-  trendData: {
-    budgetUtilization: Array<{
-      month: string;
-      monthName: string;
-      value: number;
-      formatted: string;
-    }>;
-    monthlyExecution: Array<{
-      month: string;
-      execution: number;
-      projects: number;
-      formatted: string;
-    }>;
-    newProjects: Array<{
-      month: string;
-      monthName: string;
-      value: number;
-    }>;
-    executionReports: Array<{
-      month: string;
-      monthName: string;
-      count: number;
-      amount: number;
-      formatted: string;
-    }>;
-  };
-  budgetByMinistry: Array<{
-    ministry: string;
-    total_authorized: number;
-    total_executed: number;
-    formatted_authorized: string;
-    formatted_executed: string;
-    utilization_percentage: number;
-  }>;
-  alerts: Array<{
-    id: string;
-    type: 'warning' | 'error' | 'info' | 'success';
-    category: 'budget' | 'reporting' | 'approval' | 'payment' | 'timeline' | 'performance';
-    title: string;
-    message: string;
-    severity: 'high' | 'medium' | 'low';
-    count?: number;
-    amount?: number;
-    formatted_amount?: string;
-    created_at: string;
-    project_id?: number;
-    project_name?: string;
-    tabar_number?: string;
-    action_required?: boolean;
-    due_date?: string;
-    overdue_days?: number;
-  }>;
-  lastUpdated: string;
-}
+// Import services
+import { DashboardService, DashboardData } from '@/services/dashboardService';
 
 export const EnhancedDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -113,73 +44,8 @@ export const EnhancedDashboard: React.FC = () => {
         setIsLoading(true);
       }
 
-      // Fetch main dashboard data with demo token
-      const response = await fetch('/api/dashboard/enhanced', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data');
-      }
-      const dashboardData = await response.json();
-
-      // Fetch additional analytics data
-      const analyticsResponse = await fetch('/api/dashboard/advanced-analytics', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        }
-      });
-      let analyticsData = {};
-      if (analyticsResponse.ok) {
-        analyticsData = await analyticsResponse.json();
-      }
-
-      // Combine all data
-      const combinedData: DashboardData = {
-        kpis: {
-          totalBudget: {
-            value: dashboardData.kpis?.totalBudget?.value || 0,
-            formatted: dashboardData.kpis?.totalBudget?.formatted || '₪0',
-            trend: dashboardData.kpis?.totalBudget?.trend || 0
-          },
-          utilizedBudget: {
-            value: dashboardData.kpis?.utilizedBudget?.value || 0,
-            formatted: dashboardData.kpis?.utilizedBudget?.formatted || '₪0',
-            percentage: dashboardData.kpis?.utilizedBudget?.percentage || 0,
-            trend: dashboardData.kpis?.utilizedBudget?.trend || 0
-          },
-          monthlyRevenue: {
-            value: dashboardData.kpis?.monthlyRevenue?.value || 0,
-            formatted: dashboardData.kpis?.monthlyRevenue?.formatted || '₪0',
-            trend: dashboardData.kpis?.monthlyRevenue?.trend || 0
-          },
-          completedProjects: {
-            value: dashboardData.kpis?.completedProjects?.value || 0,
-            percentage: dashboardData.kpis?.completedProjects?.percentage || 0,
-            trend: dashboardData.kpis?.completedProjects?.trend || 0
-          },
-          activeProjects: {
-            value: dashboardData.kpis?.activeProjects?.value || 0,
-            trend: dashboardData.kpis?.activeProjects?.trend || 0
-          },
-          pendingApprovals: {
-            value: dashboardData.kpis?.pendingApprovals?.value || 0,
-            urgent: dashboardData.kpis?.pendingApprovals?.urgent || 0
-          }
-        },
-        projectStatus: dashboardData.projectStatus || [],
-        trendData: {
-          budgetUtilization: dashboardData.trendData?.budgetUtilization || [],
-          monthlyExecution: dashboardData.trendData?.monthlyExecution || [],
-          newProjects: dashboardData.trendData?.newProjects || [],
-          executionReports: dashboardData.trendData?.executionReports || []
-        },
-        budgetByMinistry: dashboardData.budgetByMinistry || [],
-        alerts: dashboardData.alerts || [],
-        lastUpdated: dashboardData.lastUpdated || new Date().toISOString()
-      };
-
+      // Use the new dashboard service
+      const combinedData = await DashboardService.fetchCombined();
       setData(combinedData);
       
       if (showRefreshIndicator) {
@@ -205,32 +71,8 @@ export const EnhancedDashboard: React.FC = () => {
     try {
       setExportingPDF(true);
       
-      const response = await fetch('/api/dashboard/export-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to export PDF');
-      }
-
-      // Create blob from PDF response
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
+      // Use the new dashboard service
+      await DashboardService.downloadPDF();
       
       toast({
         title: "הדוח יוצא בהצלחה",

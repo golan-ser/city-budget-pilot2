@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ReportsService } from '@/services/reportsService';
 
 interface TabarItem {
   id: number;
@@ -228,96 +229,38 @@ export default function TabarBudgetReport() {
     }
   };
 
-  const exportAsExcel = () => {
+  const exportAsExcel = async () => {
     if (!sortedAndFilteredData || sortedAndFilteredData.length === 0) {
       alert('אין נתונים לייצוא');
       return;
     }
 
-    const exportData = sortedAndFilteredData.map(row => ({
-      "מספר תב\"ר": row.tabar_number,
-      "שם פרויקט": row.name,
-      "שנה": row.year,
-      "סטטוס": row.status,
-      "משרד": row.ministry,
-      "תקציב מאושר": row.total_authorized,
-      "תאריך פתיחה": formatDate(row.open_date),
-      "תאריך סגירה": formatDate(row.close_date),
-      "מספר הרשאה": row.permission_number || '-',
-      "תאריך יצירה": formatDate(row.created_at)
-    }));
-
-    // Add summary row
-    exportData.push({
-      "מספר תב\"ר": '',
-      "שם פרויקט": '',
-      "שנה": '',
-      "סטטוס": '',
-      "משרד": 'סה"כ:',
-      "תקציב מאושר": totalBudget,
-      "תאריך פתיחה": '',
-      "תאריך סגירה": '',
-      "מספר הרשאה": '',
-      "תאריך יצירה": `${sortedAndFilteredData.length} תב"רים`
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "דוח תב\"רים");
-    XLSX.writeFile(workbook, "tabar_budget_report.xlsx");
+    try {
+      const blob = await ReportsService.exportTabarBudgetExcel(sortedAndFilteredData);
+      ReportsService.downloadExcelFile(blob, 'tabar-budget-report.xlsx');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+    }
   };
 
+  // Load data from API
   useEffect(() => {
-    setLoading(true);
-          fetch(`/api/report-schemas/run`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-      },
-      body: JSON.stringify({
-        module: "tabarim",
-        fields: [
-          "id", "tabar_number", "name", "year", "status", "ministry", 
-          "total_authorized", "open_date", "close_date", "permission_number", 
-          "created_at", "department", "municipal_participation", "additional_funders"
-        ],
-        filters: filters
-      })
-    })
-      .then(res => res.json())
-      .then(response => {
-        console.log('Server response:', response);
-        let rows = [];
-        if (Array.isArray(response)) {
-          rows = response;
-        } else if (response && Array.isArray(response.data)) {
-          rows = response.data;
-        } else if (response && Array.isArray(response.results)) {
-          rows = response.results;
-        } else {
-          console.warn('Unexpected response format:', response);
-          rows = [];
-        }
-        // Clean and format the data
-        const cleanedRows = rows.map((row: any) => ({
-          ...row,
-          total_authorized: Number(row.total_authorized) || 0,
-          year: Number(row.year) || 0,
-          status: row.status || '',
-          ministry: row.ministry || '',
-          name: row.name || ''
-        }));
-        console.log('Cleaned data:', cleanedRows);
-        setData(cleanedRows);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const budgetData = await ReportsService.fetchTabarBudget();
+        setData(budgetData);
+      } catch (error) {
+        console.error('Error loading tabar budget:', error);
+        // Fallback to mock data
+        setData(mockData);
+      } finally {
         setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-        setData([]);
-        setLoading(false);
-      });
-  }, [filters]);
+      }
+    };
+
+    loadData();
+  }, []);
 
   if (loading) return (
     <div className="p-6 flex items-center justify-center">

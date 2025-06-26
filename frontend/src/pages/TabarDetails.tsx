@@ -1,4 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Calendar, DollarSign, Building2, FileText, Users, Settings } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabarimService } from '@/services/tabarimService';
 
 type TabarDetailsProps = {
   id: number | string;
@@ -8,15 +17,26 @@ type TabarDetailsProps = {
 export default function TabarDetails({ id, onClose }: TabarDetailsProps) {
   const [data, setData] = useState<any>(null);
   const [tab, setTab] = useState<"main" | "supervision">("main");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/tabarim/${id}`, {
-      headers: {
-        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+    const fetchTabarDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const data = await TabarimService.fetchTabarDetails(id);
+        setData(data);
+      } catch (error) {
+        console.error('Error fetching tabar details:', error);
+        setError('שגיאה בטעינת פרטי התב"ר');
+      } finally {
+        setLoading(false);
       }
-    })
-      .then((res) => res.json())
-      .then(setData);
+    };
+
+    fetchTabarDetails();
   }, [id]);
 
   if (!data) return (

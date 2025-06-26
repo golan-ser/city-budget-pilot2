@@ -30,6 +30,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import pdfIcon from "@/assets/PDF.png";
 import excelIcon from "@/assets/Excel.svg";
+import { ReportsService } from '@/services/reportsService';
 
 interface BudgetItem {
   id: number;
@@ -84,19 +85,8 @@ export default function BudgetItemsReport() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/budget-items', {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-          }
-        });
-        if (response.ok) {
-          const budgetItems = await response.json();
-          setData(budgetItems);
-        } else {
-          console.error('Failed to load budget items');
-          // Fallback to mock data if API fails
-          setData(mockData);
-        }
+        const budgetItems = await ReportsService.fetchBudgetItems();
+        setData(budgetItems);
       } catch (error) {
         console.error('Error loading budget items:', error);
         // Fallback to mock data

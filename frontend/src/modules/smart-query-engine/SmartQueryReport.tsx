@@ -7,6 +7,7 @@ import { SmartQueryResult } from './components/SmartQueryResult';
 import { useQueryParser } from './hooks/useQueryParser';
 import { cityBudgetSchema } from './config/cityBudgetSchema';
 import { ParsedIntent, SmartQueryResult as QueryResult } from './types/querySchema';
+import { OpenAIService } from '@/services/openaiService';
 
 export default function SmartQueryReport() {
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
@@ -98,7 +99,7 @@ export default function SmartQueryReport() {
         }
       }
 
-              const response = await fetch(`/api/report-schemas/run`, {
+      const response = await fetch(`/api/report-schemas/run`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -318,6 +319,42 @@ export default function SmartQueryReport() {
     currentFields,
     firstDataItem: queryResult?.data?.[0]
   });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim() || isLoading) return;
+
+    const userMessage = { type: 'user', content: query, timestamp: Date.now() };
+    setMessages(prev => [...prev, userMessage]);
+    setQuery('');
+    setIsLoading(true);
+
+    try {
+      const response = await OpenAIService.executeSmartQuery({
+        query: userMessage.content,
+        context: 'budget_analysis'
+      });
+
+      const aiMessage = {
+        type: 'ai',
+        content: response.answer || 'לא הצלחתי לעבד את השאילתה. נסה שוב.',
+        timestamp: Date.now(),
+        data: response.data
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error executing smart query:', error);
+      const errorMessage = {
+        type: 'ai',
+        content: 'אירעה שגיאה בעיבוד השאילתה. אנא נסה שוב.',
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

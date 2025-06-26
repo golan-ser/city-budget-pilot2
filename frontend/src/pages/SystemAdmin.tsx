@@ -10,6 +10,7 @@ import TenantsManagement from '@/components/admin/TenantsManagement';
 import SystemsManagement from '@/components/admin/SystemsManagement';
 import AuditLog from '@/components/admin/AuditLog';
 import { UsersManagement } from '@/components/admin/UsersManagement';
+import { AdminService } from '@/services/adminService';
 
 const OverviewDashboard = () => {
   const [statistics, setStatistics] = useState(null);
@@ -25,28 +26,18 @@ const OverviewDashboard = () => {
     try {
       setLoading(true);
       
-      const statsResponse = await fetch('http://localhost:3000/api/admin/statistics', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
+      // Use parallel requests for better performance
+      const [statsResult, activityResult] = await Promise.allSettled([
+        AdminService.fetchStatistics(),
+        AdminService.fetchRecentActivity(5)
+      ]);
 
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStatistics(statsData);
+      if (statsResult.status === 'fulfilled') {
+        setStatistics(statsResult.value);
       }
 
-      const activityResponse = await fetch('http://localhost:3000/api/admin/recent-activity?limit=5', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (activityResponse.ok) {
-        const activityData = await activityResponse.json();
-        setRecentActivity(activityData);
+      if (activityResult.status === 'fulfilled') {
+        setRecentActivity(activityResult.value);
       }
 
     } catch (err) {
@@ -94,10 +85,10 @@ const OverviewDashboard = () => {
         const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
         const response = await fetch('http://localhost:3000/api/admin/export/overview-pdf', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-          },
+                      headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
         });
 
         if (response.ok) {

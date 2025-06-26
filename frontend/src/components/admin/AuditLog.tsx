@@ -15,7 +15,11 @@ import {
   AlertTriangle,
   RefreshCw,
   Download,
-  Eye
+  Eye,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Info
 } from 'lucide-react';
 import {
   Select,
@@ -32,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AdminService } from '@/services/adminService';
 
 interface AuditLogEntry {
   log_id: number;
@@ -78,31 +83,11 @@ const AuditLog: React.FC = () => {
   const fetchAuditLog = async () => {
     try {
       setLoading(true);
-      
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '50',
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
-      });
-
-      const response = await fetch(`http://localhost:3000/api/admin/audit?${params}`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch audit log');
-      }
-
-      const data = await response.json();
-      setLogs(data.logs || []);
-      setTotalPages(Math.ceil((data.total || 0) / 50));
+      const data = await AdminService.fetchAuditLog(filters);
+      setLogs(data.logs || data || []);
+      setTotalPages(Math.ceil((data.total || data.length || 0) / 50));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בטעינת לוג פעילות');
+      setError(err instanceof Error ? err.message : 'שגיאה בטעינת יומן הביקורת');
     } finally {
       setLoading(false);
     }
@@ -110,32 +95,8 @@ const AuditLog: React.FC = () => {
 
   const handleExportLog = async () => {
     try {
-      const params = new URLSearchParams({
-        export: 'true',
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
-      });
-
-      const response = await fetch(`http://localhost:3000/api/admin/audit/export?${params}`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to export audit log');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      await AdminService.fetchAuditLog({ ...filters, export: true });
+      // Handle export response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בייצוא לוג פעילות');
     }

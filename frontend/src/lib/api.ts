@@ -1,30 +1,43 @@
-// API utility functions with authentication
-const DEMO_TOKEN = 'DEMO_SECURE_TOKEN_2024';
+import { supabase } from '@/supabaseClient';
+import { API_BASE_URL } from './apiConfig';
 
-// Get auth token from localStorage or use demo token as fallback
-const getAuthToken = () => {
-  return localStorage.getItem('authToken') || DEMO_TOKEN;
+// Get auth token from Supabase or use fallback
+const getAuthToken = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || localStorage.getItem('authToken') || null;
+  } catch (error) {
+    console.warn('Failed to get auth token:', error);
+    return localStorage.getItem('authToken') || null;
+  }
 };
 
 // Default headers with auth token
-const getHeaders = (additionalHeaders: Record<string, string> = {}) => {
-  const token = getAuthToken();
-  return {
-    'x-demo-token': token, // Keep using x-demo-token header for compatibility
-    'Authorization': `Bearer ${token}`,
-  'Content-Type': 'application/json',
-  ...additionalHeaders
+const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...additionalHeaders
   };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
 };
 
 // Authenticated fetch wrapper
 export const apiRequest = async (url: string, options: RequestInit = {}) => {
   const { headers = {}, ...otherOptions } = options;
   
-  return fetch(url, {
+  // Handle relative URLs
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  
+  return fetch(fullUrl, {
     ...otherOptions,
     headers: {
-      ...getHeaders(),
+      ...(await getHeaders()),
       ...headers
     }
   });

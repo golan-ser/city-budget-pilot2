@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import { AdminService } from '@/services/adminService';
 
 interface UserPermission {
   page_id: number;
@@ -39,24 +40,11 @@ export const usePermissions = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://localhost:3000/api/admin/permissions/user?tenantId=${user.tenant_id || 1}&systemId=1&userId=${user.id}`,
-        {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-            'Content-Type': 'application/json'
-          }
-        }
+      const data = await AdminService.fetchUserPermissions(
+        user.tenant_id || 1,
+        1,
+        user.id.toString()
       );
-
-      if (!response.ok) {
-        console.log('📋 API not available, using default permissions');
-        setPermissions(DEFAULT_PERMISSIONS);
-        setError(null);
-        return;
-      }
-      
-      const data = await response.json();
       console.log('📋 User permissions loaded:', data.data);
       
       // Convert permissions and roleDefaults to a combined permissions object
@@ -87,7 +75,7 @@ export const usePermissions = () => {
       }
       setError(null);
     } catch (err) {
-      console.log('📋 Error fetching permissions, using defaults:', err);
+      console.log('📋 API not available, using default permissions:', err);
       setPermissions(DEFAULT_PERMISSIONS);
       setError(null); // Don't show error, just use defaults
     } finally {

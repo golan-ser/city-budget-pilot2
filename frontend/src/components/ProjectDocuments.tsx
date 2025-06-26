@@ -11,6 +11,17 @@ import {
   Shield,
   Folder
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Download, Upload, Trash2, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { api } from '@/lib/api';
 
 interface Document {
   id: string;
@@ -92,8 +103,25 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   // טעינת מסמכים מהשרת
   useEffect(() => {
-    fetchDocuments();
-  }, [projectId]);
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/documents/project/${projectId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDocuments(data);
+        }
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (projectId && isOpen) {
+      fetchDocuments();
+    }
+  }, [projectId, isOpen]);
 
   // פונקציה חדשה שנגישה מבחוץ לרענון המסמכים
   const refreshDocuments = () => {
@@ -108,30 +136,6 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     // שמירת הפונקציה ב-window כדי שניתן יהיה לקרוא לה מבחוץ
     (window as any).refreshProjectDocuments = refreshDocuments;
   }, []);
-
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/documents/project/${projectId}`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('שגיאה בטעינת מסמכים');
-      }
-      
-      const data = await response.json();
-      setDocuments(data.documents || []);
-    } catch (err) {
-      console.error('Error fetching documents:', err);
-      setError(err instanceof Error ? err.message : 'שגיאה בטעינת מסמכים');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // עיצוב סכום כספי
   const formatMoney = (amount: number): string => {

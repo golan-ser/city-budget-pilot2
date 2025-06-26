@@ -125,44 +125,22 @@ const ProjectDetails = () => {
       try {
         setLoading(true);
         
-        // Fetch main project data
-        const projectResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/projects/${id}`, {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-          }
-        });
-        if (!projectResponse.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const projectData = await projectResponse.json();
+        // Fetch main project data using service
+        const projectData = await ProjectsService.fetchById(id);
         setProject(projectData);
 
         // Fetch project milestones
         try {
-          const milestonesResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/milestones?tabar_number=${id}`, {
-            headers: {
-              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-            }
-          });
-          if (milestonesResponse.ok) {
-            const milestonesData = await milestonesResponse.json();
-            setMilestones(milestonesData);
-          }
+          const milestonesData = await ProjectsService.fetchMilestones(id);
+          setMilestones(milestonesData);
         } catch (err) {
           console.log('No milestones found for this project');
         }
 
         // Fetch project documents
         try {
-          const documentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/documents?tabar_number=${id}`, {
-            headers: {
-              'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-            }
-          });
-          if (documentsResponse.ok) {
-            const documentsData = await documentsResponse.json();
-            setDocuments(documentsData);
-          }
+          const documentsData = await ProjectsService.fetchDocuments(id);
+          setDocuments(documentsData);
         } catch (err) {
           console.log('No documents found for this project');
         }

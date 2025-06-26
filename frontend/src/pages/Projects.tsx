@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
+import { TabarimService } from '@/services/tabarimService';
 import { 
   Plus, 
   Search, 
@@ -43,19 +44,11 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // Use the correct backend port (3000) and tabarim endpoint
-        const API_URL = '';
-        const response = await fetch(`${API_URL}/api/tabarim`, {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        console.log('Tabarim data received:', data); // Debug log
-        console.log('First item details:', data[0]); // Debug log
+        setLoading(true);
+        const data = await TabarimService.fetchAll();
+        
+        console.log('Tabarim data received:', data);
+        console.log('First item details:', data[0]);
         console.log('Utilization check:', {
           tabar_101: data.find(t => t.tabar_number === 101),
           all_utilized: data.map(t => ({ number: t.tabar_number, utilized: t.utilized, percentage: t.utilization_percentage }))
@@ -77,11 +70,12 @@ const Projects = () => {
         } else {
           console.log('❌ TABAR 101 NOT FOUND!');
         }
+        
         setProjects(data);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching projects:', err);
         setError('שגיאה בטעינת הפרויקטים');
+      } finally {
         setLoading(false);
       }
     };

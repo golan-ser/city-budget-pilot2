@@ -19,6 +19,7 @@ import {
   History,
   Search
 } from 'lucide-react';
+import { AdminService } from '@/services/adminService';
 
 interface LockedUser {
   user_id: number;
@@ -77,26 +78,13 @@ const LockedUsersManagement: React.FC = () => {
   const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
 
   // טעינת משתמשים נעולים
-  const fetchLockedUsers = async (page = 1) => {
-    setLoading(true);
-    setError(null);
-    
+  const fetchLockedUsers = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/locked-users?page=${page}&limit=20`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('שגיאה בטעינת משתמשים נעולים');
-      }
-
-      const data = await response.json();
-      setLockedUsers(data.data.users);
-      setPagination(data.data.pagination);
+      setLoading(true);
+      const data = await AdminService.fetchLockedUsers();
+      setLockedUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה לא ידועה');
+      setError(err instanceof Error ? err.message : 'שגיאה בטעינת משתמשים נעולים');
     } finally {
       setLoading(false);
     }
@@ -128,41 +116,23 @@ const LockedUsersManagement: React.FC = () => {
   };
 
   // שחרור משתמש
-  const handleUnlockUser = async () => {
-    if (!selectedUser) return;
-    
-    setLoading(true);
-    
+  const handleUnlockUser = async (userId: string) => {
+    if (!confirm('האם אתה בטוח שברצונך לבטל את הנעילה של משתמש זה?')) return;
+
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/unlock-user/${selectedUser.user_id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        },
-        body: JSON.stringify({ reason: unlockReason })
-      });
-
-      if (!response.ok) {
-        throw new Error('שגיאה בשחרור המשתמש');
-      }
-
-      const data = await response.json();
-      
-      // עדכון הרשימה
-      await fetchLockedUsers(pagination.page);
-      await fetchUnlockHistory(historyPagination.page);
-      
-      // איפוס הטופס
-      setUnlockReason('');
-      setSelectedUser(null);
-      setIsUnlockDialogOpen(false);
-      
-      alert(data.message);
+      await AdminService.unlockUser(userId);
+      await fetchLockedUsers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'שגיאה בשחרור המשתמש');
-    } finally {
-      setLoading(false);
+      setError(err instanceof Error ? err.message : 'שגיאה בביטול נעילת משתמש');
+    }
+  };
+
+  const handleLockUser = async (userId: string, reason: string) => {
+    try {
+      await AdminService.lockUser(userId, reason);
+      await fetchLockedUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה בנעילת משתמש');
     }
   };
 
@@ -196,7 +166,7 @@ const LockedUsersManagement: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">ניהול משתמשים נעולים</h2>
-        <Button onClick={() => fetchLockedUsers(pagination.page)} disabled={loading}>
+        <Button onClick={() => fetchLockedUsers()} disabled={loading}>
           {loading ? 'טוען...' : 'רענן'}
         </Button>
       </div>
@@ -341,7 +311,7 @@ const LockedUsersManagement: React.FC = () => {
                                       ביטול
                                     </Button>
                                     <Button
-                                      onClick={handleUnlockUser}
+                                      onClick={() => handleLockUser(selectedUser!.user_id.toString(), unlockReason)}
                                       disabled={loading}
                                       className="bg-green-600 hover:bg-green-700"
                                     >
@@ -362,7 +332,7 @@ const LockedUsersManagement: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <Button
                         variant="outline"
-                        onClick={() => fetchLockedUsers(pagination.page - 1)}
+                        onClick={() => fetchLockedUsers()}
                         disabled={pagination.page <= 1 || loading}
                       >
                         הקודם
@@ -372,7 +342,7 @@ const LockedUsersManagement: React.FC = () => {
                       </span>
                       <Button
                         variant="outline"
-                        onClick={() => fetchLockedUsers(pagination.page + 1)}
+                        onClick={() => fetchLockedUsers()}
                         disabled={pagination.page >= pagination.totalPages || loading}
                       >
                         הבא

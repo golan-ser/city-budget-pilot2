@@ -32,6 +32,7 @@ import {
 import pdfIcon from "@/assets/PDF.png";
 import excelIcon from "@/assets/Excel.svg";
 import { useNavigate } from "react-router-dom";
+import { ReportsService } from '@/services/reportsService';
 
 interface TabarItem {
   id: number;
@@ -206,31 +207,13 @@ export default function FullTabarReport() {
     }
   };
 
-  const exportAsExcel = () => {
-    const exportData = sortedData.map(row => ({
-      "מספר תב\"ר": row.tabar_number,
-      "שם תב\"ר": row.name,
-      "שנה": row.year,
-      "משרד": row.ministry,
-      "מחלקה": row.department,
-      "סטטוס": row.status,
-      "תקציב מאושר": row.total_authorized,
-      "השתתפות עירייה": row.municipal_participation,
-      "מימון נוסף": row.additional_funders,
-      "תאריך פתיחה": new Date(row.open_date).toLocaleDateString("he-IL"),
-      "תאריך סגירה": row.close_date ? new Date(row.close_date).toLocaleDateString("he-IL") : "",
-      "מס' היתר": row.permission_number,
-      "שם סעיף תקציבי": row.budget_item,
-      "תקציב סעיף": row.budget,
-      "בוצע בפועל": row.spent,
-      "אחוז ניצול": `${((row.spent / row.budget) * 100).toFixed(1)}%`,
-      "תאריך עדכון": new Date(row.updated_at).toLocaleDateString("he-IL")
-    }));
-    
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "דוח תב\"רים מלא");
-    XLSX.writeFile(workbook, "full_tabar_report.xlsx");
+  const exportAsExcel = async () => {
+    try {
+      const blob = await ReportsService.exportFullTabarExcel(sortedData);
+      ReportsService.downloadExcelFile(blob, 'full-tabar-report.xlsx');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+    }
   };
 
   const SortIcon = ({ column }: { column: keyof TabarItem }) => {
@@ -243,43 +226,22 @@ export default function FullTabarReport() {
   };
 
   useEffect(() => {
-    setLoading(true);
-    
-    const apiFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-      if (value && value !== 'all') {
-        acc[key] = value;
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const fullTabarData = await ReportsService.fetchFullTabar();
+        setData(fullTabarData.data || fullTabarData || []);
+      } catch (error) {
+        console.error('Error loading full tabar data:', error);
+        // Fallback to mock data
+        setData(mockData);
+      } finally {
+        setLoading(false);
       }
-      return acc;
-    }, {} as Record<string, string>);
+    };
 
-                fetch(`/api/report-schemas/run`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        },
-        body: JSON.stringify({
-        module: "tabar_full",
-        fields: [
-          "id", "tabar_number", "name", "year", "ministry", "department", "status",
-          "total_authorized", "municipal_participation", "additional_funders",
-          "open_date", "close_date", "permission_number",
-          "budget_item", "budget", "spent", "updated_at"
-        ],
-        filters: apiFilters
-      })
-    })
-      .then(res => res.json())
-      .then(rows => {
-        setData(rows || []);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-        setData([]);
-        setLoading(false);
-      });
-  }, [filters]);
+    loadData();
+  }, []);
 
   if (loading) {
     return (

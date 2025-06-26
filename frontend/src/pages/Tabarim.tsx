@@ -6,6 +6,7 @@ import excelLogo from "../assets/Excel.svg";
 import pdfLogo from "../assets/PDF.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { TabarimService } from '@/services/tabarimService';
 
 
 // טיפוס עזר – אפשר לעדכן בהתאם למבנה שלך
@@ -46,39 +47,33 @@ const Tabarim: React.FC = () => {
   const statuses = unique(tabarim.map((t) => t.status));
 
   const fetchTabarim = async () => {
-    const params = new URLSearchParams();
-    if (q) params.append("q", q);
-    if (ministry) params.append("ministry", ministry);
-    if (status) params.append("status", status);
-    if (year) params.append("year", year);
-
-    const res = await fetch(`/api/tabarim?${params}`, {
-      headers: {
-        'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-      }
-    });
-    const data = await res.json();
-    console.log('📋 Tabarim data received:', data);
-    
-    // Handle case where data might be an object with a data array property
-    const tabarimArray = Array.isArray(data) ? data : (data.data || data.tabarim || []);
-    
-    setTabarim(
-      tabarimArray.map((t: any) => {
-        const utilizedAmount = t.utilized || 0;
-        const totalAuthorized = Number(t.total_authorized) || 0;
-        const balance = totalAuthorized - utilizedAmount;
-        
-        console.log(`📊 Tabar ${t.tabar_number}: ${utilizedAmount} / ${totalAuthorized} (${t.utilization_percentage || 0}%)`);
-        
-        return {
-          ...t,
-          execution_amount: utilizedAmount.toLocaleString(),
-          balance: balance.toLocaleString(),
-          utilization_percentage: t.utilization_percentage || 0
-        };
-      })
-    );
+    try {
+      const data = await TabarimService.fetchAll();
+      console.log('📋 Tabarim data received:', data);
+      
+      // Handle case where data might be an object with a data array property
+      const tabarimArray = Array.isArray(data) ? data : (data.data || data.tabarim || []);
+      
+      setTabarim(
+        tabarimArray.map((t: any) => {
+          const utilizedAmount = t.utilized || 0;
+          const totalAuthorized = Number(t.total_authorized) || 0;
+          const balance = totalAuthorized - utilizedAmount;
+          
+          console.log(`📊 Tabar ${t.tabar_number}: ${utilizedAmount} / ${totalAuthorized} (${t.utilization_percentage || 0}%)`);
+          
+          return {
+            ...t,
+            execution_amount: utilizedAmount.toLocaleString(),
+            balance: balance.toLocaleString(),
+            utilization_percentage: t.utilization_percentage || 0
+          };
+        })
+      );
+    } catch (error) {
+      console.error('Error fetching tabarim:', error);
+      // Handle error appropriately
+    }
   };
 
   useEffect(() => {
@@ -115,17 +110,18 @@ const Tabarim: React.FC = () => {
     try {
       setExportingPDF(true);
       
-      // בניית URL עם פרמטרים
+      // Use service for PDF export
+      // Note: This endpoint might not exist in the service yet, keeping original functionality
+      // TODO: Add export functionality to TabarimService
       const params = new URLSearchParams();
       if (q) params.append('q', q);
       if (ministry) params.append('ministry', ministry);
       if (year) params.append('year', year);
       if (status) params.append('status', status);
       
-      const apiUrl = '';
-      const response = await fetch(`${apiUrl}/api/tabarim/export-pdf?${params.toString()}`, {
+      const response = await fetch(`/api/tabarim/export-pdf?${params.toString()}`, {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         }
       });
       

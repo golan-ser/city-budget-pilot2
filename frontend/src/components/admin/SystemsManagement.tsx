@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AdminService } from '@/services/adminService';
 
 interface System {
   system_id: number;
@@ -73,18 +74,7 @@ const SystemsManagement: React.FC = () => {
   const fetchSystems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/admin/systems', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch systems');
-      }
-
-      const data = await response.json();
+      const data = await AdminService.fetchSystems();
       setSystems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בטעינת מערכות');
@@ -95,19 +85,7 @@ const SystemsManagement: React.FC = () => {
 
   const handleCreateSystem = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/systems', {
-        method: 'POST',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create system');
-      }
-
+      await AdminService.createSystem(formData);
       await fetchSystems();
       setIsDialogOpen(false);
       resetForm();
@@ -120,19 +98,7 @@ const SystemsManagement: React.FC = () => {
     if (!editingSystem) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/systems/${editingSystem.system_id}`, {
-        method: 'PUT',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update system');
-      }
-
+      await AdminService.updateSystem(editingSystem.system_id, formData);
       await fetchSystems();
       setIsDialogOpen(false);
       setEditingSystem(null);
@@ -146,18 +112,7 @@ const SystemsManagement: React.FC = () => {
     if (!confirm('האם אתה בטוח שברצונך למחוק מערכת זו?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/systems/${systemId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete system');
-      }
-
+      await AdminService.deleteSystem(systemId);
       await fetchSystems();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה במחיקת מערכת');

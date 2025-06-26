@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Building
 } from 'lucide-react';
+import { AdminService } from '@/services/adminService';
 
 interface Tenant {
   tenant_id: number;
@@ -81,51 +82,25 @@ const RolesManagement: React.FC = () => {
   };
 
   const fetchRoles = async () => {
-    if (!selectedTenant) return;
-
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/admin/tenants/${selectedTenant}/roles`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch roles');
-      const data = await response.json();
+      const data = await AdminService.fetchRoles();
       setRoles(data);
     } catch (err) {
-      setError('שגיאה בטעינת תפקידים');
+      setError(err instanceof Error ? err.message : 'שגיאה בטעינת תפקידים');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateRole = async () => {
-    if (!selectedTenant) return;
-
     try {
-      const response = await fetch('http://localhost:3000/api/admin/roles', {
-        method: 'POST',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          tenantId: selectedTenant,
-          roleName: formData.roleName,
-          roleDescription: formData.roleDescription
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to create role');
-
+      await AdminService.createRole(formData);
       await fetchRoles();
       setIsDialogOpen(false);
       resetForm();
     } catch (err) {
-      setError('שגיאה ביצירת תפקיד');
+      setError(err instanceof Error ? err.message : 'שגיאה ביצירת תפקיד');
     }
   };
 
@@ -133,48 +108,24 @@ const RolesManagement: React.FC = () => {
     if (!editingRole) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/roles/${editingRole.role_id}`, {
-        method: 'PUT',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          roleName: formData.roleName,
-          roleDescription: formData.roleDescription,
-          isActive: formData.isActive
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update role');
-
+      await AdminService.updateRole(editingRole.role_id, formData);
       await fetchRoles();
       setIsDialogOpen(false);
+      setEditingRole(null);
       resetForm();
     } catch (err) {
-      setError('שגיאה בעדכון תפקיד');
+      setError(err instanceof Error ? err.message : 'שגיאה בעדכון תפקיד');
     }
   };
 
-  const handleDeleteRole = async (roleId: number) => {
-    if (!confirm('האם אתה בטוח שברצונך למחוק את התפקיד? פעולה זו אינה הפיכה.')) {
-      return;
-    }
+  const handleDeleteRole = async (roleId: string) => {
+    if (!confirm('האם אתה בטוח שברצונך למחוק תפקיד זה?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/roles/${roleId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to delete role');
-
+      await AdminService.deleteRole(roleId);
       await fetchRoles();
     } catch (err) {
-      setError('שגיאה במחיקת תפקיד');
+      setError(err instanceof Error ? err.message : 'שגיאה במחיקת תפקיד');
     }
   };
 
@@ -395,7 +346,7 @@ const RolesManagement: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteRole(role.role_id)}
+                            onClick={() => handleDeleteRole(role.role_id.toString())}
                             disabled={role.is_system_role || role.user_count > 0}
                           >
                             <Trash2 className="h-4 w-4" />

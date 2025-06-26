@@ -87,7 +87,7 @@ const ReportsCenter: React.FC = () => {
     try {
       const response = await fetch('/api/reports/budget-execution', {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
@@ -111,7 +111,7 @@ const ReportsCenter: React.FC = () => {
       
       const response = await fetch(`/api/reports/invoices?${params.toString()}`, {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
@@ -130,7 +130,7 @@ const ReportsCenter: React.FC = () => {
     try {
       const response = await fetch('/api/reports/ministry', {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
@@ -149,7 +149,7 @@ const ReportsCenter: React.FC = () => {
     try {
       const response = await fetch(`/api/reports/cash-flow?period=${period}`, {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
@@ -168,8 +168,7 @@ const ReportsCenter: React.FC = () => {
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           reportType,

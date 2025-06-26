@@ -21,6 +21,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { AdminService } from '@/services/adminService';
 
 interface Tenant {
   tenant_id: number;
@@ -66,18 +67,7 @@ const TenantsManagement: React.FC = () => {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/admin/tenants', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenants');
-      }
-
-      const data = await response.json();
+      const data = await AdminService.fetchTenants();
       setTenants(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בטעינת רשויות');
@@ -88,18 +78,7 @@ const TenantsManagement: React.FC = () => {
 
   const fetchSystems = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/systems', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch systems');
-      }
-
-      const data = await response.json();
+      const data = await AdminService.fetchSystems();
       setSystems(data);
     } catch (err) {
       console.error('Error fetching systems:', err);
@@ -108,18 +87,7 @@ const TenantsManagement: React.FC = () => {
 
   const fetchTenantSystems = async (tenantId: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/tenants/${tenantId}/systems`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenant systems');
-      }
-
-      const data = await response.json();
+      const data = await AdminService.fetchTenantSystems(tenantId);
       setTenantSystems(data);
     } catch (err) {
       console.error('Error fetching tenant systems:', err);
@@ -128,19 +96,7 @@ const TenantsManagement: React.FC = () => {
 
   const handleCreateTenant = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/tenants', {
-        method: 'POST',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create tenant');
-      }
-
+      await AdminService.createTenant(formData);
       await fetchTenants();
       setIsDialogOpen(false);
       setFormData({ name: '', status: 'active' });
@@ -153,19 +109,7 @@ const TenantsManagement: React.FC = () => {
     if (!editingTenant) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/tenants/${editingTenant.tenant_id}`, {
-        method: 'PUT',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update tenant');
-      }
-
+      await AdminService.updateTenant(editingTenant.tenant_id, formData);
       await fetchTenants();
       setIsDialogOpen(false);
       setEditingTenant(null);
@@ -181,18 +125,7 @@ const TenantsManagement: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/tenants/${tenantId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete tenant');
-      }
-
+      await AdminService.deleteTenant(tenantId);
       await fetchTenants();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה במחיקת רשות');
