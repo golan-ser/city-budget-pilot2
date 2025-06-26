@@ -317,14 +317,8 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant || !selectedSystem) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/admin/export/user-permissions/excel?tenantId=${selectedTenant}&systemId=${selectedSystem}`,
-        {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await api.get(
+        `/admin/export/user-permissions/excel?tenantId=${selectedTenant}&systemId=${selectedSystem}`
       );
 
       if (!response.ok) throw new Error('Failed to export Excel');
@@ -346,14 +340,8 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant || !selectedSystem) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/admin/export/user-permissions/pdf?tenantId=${selectedTenant}&systemId=${selectedSystem}`,
-        {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await api.get(
+        `/admin/export/user-permissions/pdf?tenantId=${selectedTenant}&systemId=${selectedSystem}`
       );
 
       if (response.ok) {

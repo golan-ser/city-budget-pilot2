@@ -10,55 +10,55 @@ export const API_BASE_URL: string = import.meta.env.VITE_API_URL ||
 export const API_ENDPOINTS = {
   // Authentication
   AUTH: {
-    LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
+    LOGIN: '/api/auth/login',
+    LOGOUT: '/api/auth/logout',
+    REFRESH: '/api/auth/refresh',
+    PROFILE: '/api/auth/profile',
   },
 
   // Projects
-  PROJECTS: '/projects',
+  PROJECTS: '/api/projects',
   
   // Tabarim
-  TABARIM: '/tabarim',
+  TABARIM: '/api/tabarim',
   
   // Dashboard
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/api/dashboard',
   
   // OpenAI Status
-  OPENAI_STATUS: '/openai-status',
+  OPENAI_STATUS: '/api/openai-status',
 
   // Smart Query
-  SMART_QUERY: '/smart-query',
+  SMART_QUERY: '/api/smart-query',
 
   // Reports
   REPORTS: {
-    DASHBOARD: '/reports/dashboard',
-    PROJECTS: '/reports/projects',
-    BUDGET_ITEMS: '/budget-items',
-    BUDGET_ITEMS_REPORT: '/reports/budget-items',
-    FULL_TABAR: '/reports/full-tabar',
-    EXPORT_PDF: '/reports/export/pdf',
-    EXPORT_EXCEL: '/reports/export/excel',
+    DASHBOARD: '/api/reports/dashboard',
+    PROJECTS: '/api/reports/projects',
+    BUDGET_ITEMS: '/api/budget-items',
+    BUDGET_ITEMS_REPORT: '/api/reports/budget-items',
+    FULL_TABAR: '/api/reports/full-tabar',
+    EXPORT_PDF: '/api/reports/export/pdf',
+    EXPORT_EXCEL: '/api/reports/export/excel',
   },
 
   // Admin
   ADMIN: {
-    PERMISSIONS: '/admin/permissions',
-    USERS: '/admin/users',
-    STATISTICS: '/admin/statistics',
-    TENANTS: '/admin/tenants',
-    SYSTEMS: '/admin/systems',
-    ROLES: '/admin/roles',
-    AUDIT_LOG: '/admin/audit-log',
+    PERMISSIONS: '/api/admin/permissions',
+    USERS: '/api/admin/users',
+    STATISTICS: '/api/admin/statistics',
+    TENANTS: '/api/admin/tenants',
+    SYSTEMS: '/api/admin/systems',
+    ROLES: '/api/admin/roles',
+    AUDIT_LOG: '/api/admin/audit',
   },
 
   // Milestones
-  MILESTONES: '/milestones',
+  MILESTONES: '/api/milestones',
 
   // Documents
-  DOCUMENTS: '/documents',
+  DOCUMENTS: '/api/documents',
 
   // Comments
-  COMMENTS: '/comments',
+  COMMENTS: '/api/comments',
 } as const; 
