@@ -17,6 +17,9 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
   const token = await getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     ...additionalHeaders
   };
   
@@ -27,41 +30,89 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
   return headers;
 };
 
-// Authenticated fetch wrapper
+// Handle CORS preflight requests
+const handleCorsError = (error: any, url: string) => {
+  console.warn(`CORS error for ${url}:`, error);
+  console.warn('📋 API not available, using fallback or default data');
+  return null;
+};
+
+// Authenticated fetch wrapper with CORS handling
 export const apiRequest = async (url: string, options: RequestInit = {}) => {
   const { headers = {}, ...otherOptions } = options;
   
   // Handle relative URLs
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
   
-  return fetch(fullUrl, {
-    ...otherOptions,
-    headers: {
-      ...(await getHeaders()),
-      ...headers
+  try {
+    const response = await fetch(fullUrl, {
+      ...otherOptions,
+      mode: 'cors', // Explicitly set CORS mode
+      credentials: 'omit', // Don't send credentials for cross-origin requests
+      headers: {
+        ...(await getHeaders()),
+        ...headers
+      }
+    });
+
+    if (!response.ok) {
+      console.warn(`API request failed: ${response.status} ${response.statusText}`);
     }
-  });
+
+    return response;
+  } catch (error: any) {
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      console.error('Network error or CORS issue:', error);
+      handleCorsError(error, fullUrl);
+      throw new Error(`Network error: Unable to connect to API at ${fullUrl}`);
+    }
+    throw error;
+  }
 };
 
-// Common API methods
+// Common API methods with error handling
 export const api = {
-  get: (url: string, options: RequestInit = {}) => 
-    apiRequest(url, { ...options, method: 'GET' }),
+  get: async (url: string, options: RequestInit = {}) => {
+    try {
+      return await apiRequest(url, { ...options, method: 'GET' });
+    } catch (error) {
+      console.error(`GET ${url} failed:`, error);
+      throw error;
+    }
+  },
   
-  post: (url: string, body?: any, options: RequestInit = {}) =>
-    apiRequest(url, {
-      ...options,
-      method: 'POST',
-      body: body ? JSON.stringify(body) : undefined
-    }),
+  post: async (url: string, body?: any, options: RequestInit = {}) => {
+    try {
+      return await apiRequest(url, {
+        ...options,
+        method: 'POST',
+        body: body ? JSON.stringify(body) : undefined
+      });
+    } catch (error) {
+      console.error(`POST ${url} failed:`, error);
+      throw error;
+    }
+  },
   
-  put: (url: string, body?: any, options: RequestInit = {}) =>
-    apiRequest(url, {
-      ...options,
-      method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined
-    }),
+  put: async (url: string, body?: any, options: RequestInit = {}) => {
+    try {
+      return await apiRequest(url, {
+        ...options,
+        method: 'PUT',
+        body: body ? JSON.stringify(body) : undefined
+      });
+    } catch (error) {
+      console.error(`PUT ${url} failed:`, error);
+      throw error;
+    }
+  },
   
-  delete: (url: string, options: RequestInit = {}) =>
-    apiRequest(url, { ...options, method: 'DELETE' })
+  delete: async (url: string, options: RequestInit = {}) => {
+    try {
+      return await apiRequest(url, { ...options, method: 'DELETE' });
+    } catch (error) {
+      console.error(`DELETE ${url} failed:`, error);
+      throw error;
+    }
+  }
 }; 

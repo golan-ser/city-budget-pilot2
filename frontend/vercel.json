@@ -1,0 +1,25 @@
+{
+  "functions": {
+    "app/routes/**/*.tsx": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "unsafe-none"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://city-budget-pilot2-production.up.railway.app/api"
+  }
+} 

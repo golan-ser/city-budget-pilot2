@@ -1,5 +1,8 @@
 // API Configuration
-export const API_BASE_URL: string = import.meta.env.VITE_API_URL || '/api';
+export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? 'https://city-budget-pilot2-production.up.railway.app/api'
+    : '/api');
 
 // API endpoints
 export const API_ENDPOINTS = {
