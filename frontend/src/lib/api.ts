@@ -17,14 +17,13 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
   const token = await getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // Force demo token for now until auth is properly configured
+    'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
     ...additionalHeaders
   };
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-  } else {
-    // Fallback to demo token for development/testing
-    headers['x-demo-token'] = 'DEMO_SECURE_TOKEN_2024';
   }
   
   return headers;
