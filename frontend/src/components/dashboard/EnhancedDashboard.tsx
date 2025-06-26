@@ -144,8 +144,8 @@ export const EnhancedDashboard: React.FC = () => {
     );
   }
 
-  const totalProjects = data.projectStatus.reduce((sum, item) => sum + item.count, 0);
-  const totalBudgetFromProjects = data.projectStatus.reduce((sum, item) => sum + item.total_budget, 0);
+  const totalProjects = (data.projectStatus || []).reduce((sum, item) => sum + (item?.count || 0), 0);
+  const totalBudgetFromProjects = (data.projectStatus || []).reduce((sum, item) => sum + (item?.total_budget || 0), 0);
 
   return (
     <div className="space-y-6">

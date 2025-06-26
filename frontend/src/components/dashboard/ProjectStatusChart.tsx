@@ -142,7 +142,7 @@ export const ProjectStatusChart: React.FC<ProjectStatusChartProps> = ({
   }
 
   // Prepare data with colors
-  const chartData = data.map(item => ({
+  const chartData = (data || []).map(item => ({
     ...item,
     color: getStatusColor(item.status)
   }));

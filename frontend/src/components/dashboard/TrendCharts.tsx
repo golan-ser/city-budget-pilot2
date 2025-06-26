@@ -75,7 +75,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <p className="font-semibold text-gray-900 dark:text-white mb-2">
             {label}
           </p>
-          {payload.map((entry: any, index: number) => (
+          {(payload || []).map((entry: any, index: number) => (
             <div key={index} className="flex items-center space-x-2">
               <div
                 className="w-3 h-3 rounded-full"
@@ -252,19 +252,22 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         <div className="grid grid-cols-3 gap-4 mt-4">
           <div className="text-center p-3 bg-slate-50 rounded-lg">
             <div className="text-lg font-semibold text-indigo-600">
-              {data.monthlyExecution[data.monthlyExecution.length - 1]?.formatted || '₪0'}
+              {(data.monthlyExecution || [])[(data.monthlyExecution || []).length - 1]?.formatted || '₪0'}
             </div>
             <div className="text-xs text-gray-600">החודש הנוכחי</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
             <div className="text-lg font-semibold text-purple-600">
-              {data.monthlyExecution.reduce((sum, item) => sum + item.execution, 0).toLocaleString('he-IL')}
+              {(data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0).toLocaleString('he-IL')}
             </div>
             <div className="text-xs text-gray-600">סה"כ 12 חודשים</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
             <div className="text-lg font-semibold text-green-600">
-              {Math.round(data.monthlyExecution.reduce((sum, item) => sum + item.execution, 0) / data.monthlyExecution.length).toLocaleString('he-IL')}
+              {((data.monthlyExecution || []).length > 0 
+                ? Math.round((data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0) / (data.monthlyExecution || []).length) 
+                : 0
+              ).toLocaleString('he-IL')}
             </div>
             <div className="text-xs text-gray-600">ממוצע חודשי</div>
           </div>
