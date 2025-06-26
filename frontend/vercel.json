@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "app/routes/**/*.tsx": {
-      "maxDuration": 30
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
@@ -22,4 +17,4 @@
   "env": {
     "VITE_API_URL": "https://city-budget-pilot2-production.up.railway.app/api"
   }
-} 
+}
