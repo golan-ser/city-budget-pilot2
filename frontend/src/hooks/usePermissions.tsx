@@ -80,7 +80,39 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
       
       // Try to fetch permissions from API
       const data = await AdminService.fetchUserPermissions(1, 1, '3');
-      setPermissions(data.permissions || defaultPermissions);
+      
+      // Handle different possible response structures
+      let apiPermissions: UserPermissions = {};
+      
+      if (data && typeof data === 'object') {
+        // If data has permissions property
+        if (data.permissions && typeof data.permissions === 'object') {
+          apiPermissions = data.permissions;
+        }
+        // If data has data.permissions property
+        else if (data.data && data.data.permissions && typeof data.data.permissions === 'object') {
+          apiPermissions = data.data.permissions;
+        }
+        // If data itself is the permissions object
+        else if (data.page_id || Object.values(data).some((val: any) => val && val.page_id)) {
+          apiPermissions = data;
+        }
+      }
+      
+      // Validate that we have valid permissions
+      const hasValidPermissions = Object.keys(apiPermissions).length > 0 && 
+        Object.values(apiPermissions).every((perm: any) => 
+          perm && typeof perm === 'object' && 
+          typeof perm.can_view === 'boolean'
+        );
+      
+      if (hasValidPermissions) {
+        setPermissions(apiPermissions);
+        console.log('✅ Permissions loaded from API:', apiPermissions);
+      } else {
+        console.warn('⚠️ Invalid permissions structure from API, using defaults');
+        setPermissions(defaultPermissions);
+      }
       
     } catch (err: any) {
       console.warn('📋 API not available, using default permissions:', err);
@@ -92,16 +124,23 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasPermission = (pageId: string, action: 'view' | 'create' | 'edit' | 'delete' | 'export'): boolean => {
-    const permission = permissions[pageId];
-    if (!permission) return false;
+    try {
+      const permission = permissions[pageId];
+      if (!permission || typeof permission !== 'object') {
+        return false;
+      }
 
-    switch (action) {
-      case 'view': return permission.can_view;
-      case 'create': return permission.can_create;
-      case 'edit': return permission.can_edit;
-      case 'delete': return permission.can_delete;
-      case 'export': return permission.can_export;
-      default: return false;
+      switch (action) {
+        case 'view': return Boolean(permission.can_view);
+        case 'create': return Boolean(permission.can_create);
+        case 'edit': return Boolean(permission.can_edit);
+        case 'delete': return Boolean(permission.can_delete);
+        case 'export': return Boolean(permission.can_export);
+        default: return false;
+      }
+    } catch (err) {
+      console.warn('Error checking permission:', err);
+      return false;
     }
   };
 
