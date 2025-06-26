@@ -6,8 +6,13 @@
   "main": "secure_server.js",
   "scripts": {
     "start": "node secure_server.js",
+    "build": "echo 'No build step required for this project'",
     "dev": "node --watch secure_server.js",
     "test": "node test_security.js"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "dependencies": {
     "@fontsource/noto-sans-hebrew": "^5.2.6",
