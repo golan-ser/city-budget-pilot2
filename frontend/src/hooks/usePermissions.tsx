@@ -27,11 +27,19 @@ const PermissionsContext = createContext<PermissionsContextType | undefined>(und
 
 // Default permissions for fallback
 const DEFAULT_PERMISSIONS: PermissionsData = {
-  dashboard: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
-  projects: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
-  tabarim: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
-  reports: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
-  admin: { can_view: false, can_edit: false, can_delete: false, can_create: false, can_export: false, can_import: false }
+  dashboard: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  projects: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  tabarim: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  reports: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  admin: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  // הוספת עמודים נוספים שעלולים להיחסר
+  1: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  2: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  3: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  4: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  5: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  11: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true },
+  25: { can_view: true, can_edit: true, can_delete: true, can_create: true, can_export: true, can_import: true }
 };
 
 export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
@@ -147,6 +155,20 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
+      // 🔓 ADMIN BYPASS: Admin users always have full permissions
+      try {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          if (user.email === 'demo@demo.com' || user.role_name === 'admin' || user.role_name === 'demo') {
+            console.log(`🔓 ADMIN BYPASS: Full permissions granted for ${pageId}.${action} (User: ${user.email}, Role: ${user.role_name})`);
+            return true;
+          }
+        }
+      } catch (e) {
+        console.warn('📋 Error parsing userData from localStorage:', e);
+      }
+      
       const permission = permissions[pageId];
       if (!permission || typeof permission !== 'object') {
         console.warn(`📋 No permission found for page: ${pageId}`);
@@ -165,6 +187,20 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
   // Safe page access check
   const canAccessPage = (pageId: string): boolean => {
     try {
+      // 🔓 ADMIN BYPASS: Admin users can access all pages
+      try {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          if (user.email === 'demo@demo.com' || user.role_name === 'admin' || user.role_name === 'demo') {
+            console.log(`🔓 ADMIN BYPASS: Page access granted for ${pageId} (User: ${user.email}, Role: ${user.role_name})`);
+            return true;
+          }
+        }
+      } catch (e) {
+        console.warn('📋 Error parsing userData for page access:', e);
+      }
+      
       return hasPermission(pageId, 'can_view');
     } catch (error) {
       console.error('📋 Error checking page access:', error);

@@ -2,6 +2,15 @@ import React from 'react';
 import { usePermissions } from '../hooks/usePermissions';
 import { useAuth } from '../hooks/useAuth';
 
+interface Permission {
+  can_view: boolean;
+  can_edit: boolean;
+  can_delete: boolean;
+  can_create: boolean;
+  can_export: boolean;
+  can_import: boolean;
+}
+
 interface PermissionGuardProps {
   pageId: number;
   action?: 'view' | 'create' | 'edit' | 'delete' | 'export';
@@ -40,7 +49,9 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     );
   }
 
-  const hasAccess = hasPermission(pageId, action);
+  // Map action to permission key
+  const permissionKey = `can_${action}` as keyof Permission;
+  const hasAccess = hasPermission(pageId.toString(), permissionKey);
 
   if (!hasAccess) {
     if (fallback) {
