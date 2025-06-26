@@ -125,8 +125,25 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
 
   const hasPermission = (pageId: string, action: 'view' | 'create' | 'edit' | 'delete' | 'export'): boolean => {
     try {
+      // Extra safety checks
+      if (!permissions || typeof permissions !== 'object') {
+        console.warn('Permissions object is invalid, using false');
+        return false;
+      }
+
       const permission = permissions[pageId];
       if (!permission || typeof permission !== 'object') {
+        console.warn(`Permission for pageId ${pageId} not found or invalid`);
+        return false;
+      }
+
+      // Ensure all required properties exist
+      if (typeof permission.can_view !== 'boolean' ||
+          typeof permission.can_create !== 'boolean' ||
+          typeof permission.can_edit !== 'boolean' ||
+          typeof permission.can_delete !== 'boolean' ||
+          typeof permission.can_export !== 'boolean') {
+        console.warn(`Permission object for ${pageId} has invalid structure:`, permission);
         return false;
       }
 
@@ -136,16 +153,22 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
         case 'edit': return Boolean(permission.can_edit);
         case 'delete': return Boolean(permission.can_delete);
         case 'export': return Boolean(permission.can_export);
-        default: return false;
+        default: 
+          console.warn(`Invalid action: ${action}`);
+          return false;
       }
     } catch (err) {
-      console.warn('Error checking permission:', err);
+      console.error('Error in hasPermission:', err, { pageId, action });
       return false;
     }
   };
 
   const refreshPermissions = async () => {
-    await fetchPermissions();
+    try {
+      await fetchPermissions();
+    } catch (err) {
+      console.error('Error refreshing permissions:', err);
+    }
   };
 
   useEffect(() => {
