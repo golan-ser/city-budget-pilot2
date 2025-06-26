@@ -2,12 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm ci --force",
-  "functions": {
-    "app/server.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
+  "installCommand": "npm ci",
   "headers": [
     {
       "source": "/assets/(.*)",
