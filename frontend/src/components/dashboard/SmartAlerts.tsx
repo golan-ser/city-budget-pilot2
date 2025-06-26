@@ -106,18 +106,18 @@ export const SmartAlerts: React.FC<SmartAlertsProps> = ({
     }
   };
 
-  const filteredAlerts = alerts.filter(alert => {
+  const filteredAlerts = (alerts || []).filter(alert => {
     if (filter !== 'all' && alert.severity !== filter) return false;
     if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
     return true;
   });
 
-  const alertsByCategory = alerts.reduce((acc, alert) => {
+  const alertsByCategory = (alerts || []).reduce((acc, alert) => {
     acc[alert.category] = (acc[alert.category] || 0) + 1;
     return acc;
   }, {} as Record<Alert['category'], number>);
 
-  const alertsBySeverity = alerts.reduce((acc, alert) => {
+  const alertsBySeverity = (alerts || []).reduce((acc, alert) => {
     acc[alert.severity] = (acc[alert.severity] || 0) + 1;
     return acc;
   }, {} as Record<Alert['severity'], number>);

@@ -623,7 +623,7 @@ const ProjectDetails = () => {
                   </Button>
                 </div>
               ) : (
-                milestones.map((milestone) => (
+                (milestones || []).map((milestone) => (
                   <div key={milestone.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -686,7 +686,7 @@ const ProjectDetails = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {executionReports.map((report) => (
+                        {(executionReports || []).map((report) => (
                           <tr key={report.id} className="border-b">
                             <td className="p-3">{report.report_date ? new Date(report.report_date).toLocaleDateString('he-IL') : 'לא הוגדר'}</td>
                             <td className="p-3">{formatCurrency(report.amount)}</td>
@@ -706,7 +706,7 @@ const ProjectDetails = () => {
                   </div>
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                     <div className="font-semibold">
-                      סה"כ סכום מדווח: {formatCurrency(executionReports.reduce((sum, r) => sum + (r.amount || 0), 0))}
+                      סה"כ סכום מדווח: {formatCurrency((executionReports || []).reduce((sum, r) => sum + (r.amount || 0), 0))}
                     </div>
                   </div>
                 </>
@@ -795,7 +795,7 @@ const ProjectDetails = () => {
                 <h3 className="font-semibold mb-2">אנשי קשר</h3>
                 <div className="space-y-2">
                   {(project?.contacts || []).length > 0 ? (
-                    project.contacts.map((contact) => (
+                    (project.contacts || []).map((contact) => (
                       <div key={contact.id} className="text-sm">
                         <div className="font-medium">{contact.role}: {contact.name}</div>
                         <div className="text-gray-600">{contact.email} | {contact.phone}</div>
@@ -861,14 +861,14 @@ const ProjectDetails = () => {
               </div>
 
               {/* התראות חכמות */}
-              {analytics?.alerts && analytics.alerts.length > 0 && (
+              {analytics?.alerts && (analytics.alerts || []).length > 0 && (
                 <div className="border-t pt-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5" />
                     התראות חכמות
                   </h3>
                   <div className="space-y-3">
-                    {analytics.alerts.map((alert: any, index: number) => (
+                    {(analytics.alerts || []).map((alert: any, index: number) => (
                       <div key={index} className={`p-3 rounded-lg border ${
                         alert.severity === 'high' ? 'bg-red-50 border-red-200' :
                         alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
