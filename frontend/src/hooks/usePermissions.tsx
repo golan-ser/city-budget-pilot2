@@ -1,179 +1,167 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AdminService } from '@/services/adminService';
 
-export interface Permission {
-  page_id: number;
+interface Permission {
   can_view: boolean;
-  can_create: boolean;
   can_edit: boolean;
   can_delete: boolean;
+  can_create: boolean;
   can_export: boolean;
+  can_import: boolean;
 }
 
-export interface UserPermissions {
-  [key: string]: Permission;
+interface PermissionsData {
+  [pageId: string]: Permission;
 }
 
 interface PermissionsContextType {
-  permissions: UserPermissions;
+  permissions: PermissionsData;
   loading: boolean;
   error: string | null;
-  hasPermission: (pageId: string, action: 'view' | 'create' | 'edit' | 'delete' | 'export') => boolean;
-  refreshPermissions: () => Promise<void>;
+  hasPermission: (pageId: string, action: keyof Permission) => boolean;
+  canAccessPage: (pageId: string) => boolean;
+  refetch: () => Promise<void>;
 }
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
 
-// Default permissions for fallback when API is not available
-const defaultPermissions: UserPermissions = {
-  dashboard: {
-    page_id: 1,
-    can_view: true,
-    can_create: false,
-    can_edit: false,
-    can_delete: false,
-    can_export: true
-  },
-  projects: {
-    page_id: 2,
-    can_view: true,
-    can_create: true,
-    can_edit: true,
-    can_delete: false,
-    can_export: true
-  },
-  tabarim: {
-    page_id: 3,
-    can_view: true,
-    can_create: true,
-    can_edit: true,
-    can_delete: false,
-    can_export: true
-  },
-  reports: {
-    page_id: 4,
-    can_view: true,
-    can_create: false,
-    can_edit: false,
-    can_delete: false,
-    can_export: true
-  },
-  admin: {
-    page_id: 5,
-    can_view: true,
-    can_create: true,
-    can_edit: true,
-    can_delete: true,
-    can_export: true
-  }
+// Default permissions for fallback
+const DEFAULT_PERMISSIONS: PermissionsData = {
+  dashboard: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
+  projects: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
+  tabarim: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
+  reports: { can_view: true, can_edit: false, can_delete: false, can_create: false, can_export: true, can_import: false },
+  admin: { can_view: false, can_edit: false, can_delete: false, can_create: false, can_export: false, can_import: false }
 };
 
 export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
-  const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
+  const [permissions, setPermissions] = useState<PermissionsData>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPermissions = async () => {
+  // Safe validation function
+  const validatePermission = (perm: any): Permission => {
+    if (!perm || typeof perm !== 'object') {
+      return DEFAULT_PERMISSIONS.dashboard;
+    }
+    
+    return {
+      can_view: Boolean(perm.can_view),
+      can_edit: Boolean(perm.can_edit),
+      can_delete: Boolean(perm.can_delete),
+      can_create: Boolean(perm.can_create),
+      can_export: Boolean(perm.can_export),
+      can_import: Boolean(perm.can_import)
+    };
+  };
+
+  // Safe validation of entire permissions object
+  const validatePermissions = (data: any): PermissionsData => {
+    if (!data || typeof data !== 'object') {
+      console.warn('📋 Invalid permissions data, using defaults');
+      return DEFAULT_PERMISSIONS;
+    }
+
+    const validated: PermissionsData = {};
+    
+    // Validate each permission entry
+    Object.keys(DEFAULT_PERMISSIONS).forEach(pageId => {
+      validated[pageId] = validatePermission(data[pageId]);
+    });
+
+    // Add any additional valid permissions from data
+    Object.keys(data).forEach(pageId => {
+      if (!validated[pageId] && data[pageId]) {
+        validated[pageId] = validatePermission(data[pageId]);
+      }
+    });
+
+    return validated;
+  };
+
+  const fetchUserPermissions = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Try to fetch permissions from API
-      const data = await AdminService.fetchUserPermissions(1, 1, '3');
+      console.log('🔍 Fetching user permissions...');
       
-      // Handle different possible response structures
-      let apiPermissions: UserPermissions = {};
+             const data = await AdminService.fetchUserPermissions(1, 1, '3');
       
       if (data && typeof data === 'object') {
-        // If data has permissions property
+        console.log('✅ Raw permissions data:', data);
+        
+        let apiPermissions: any = {};
+        
+        // Handle different API response structures
         if (data.permissions && typeof data.permissions === 'object') {
           apiPermissions = data.permissions;
-        }
-        // If data has data.permissions property
-        else if (data.data && data.data.permissions && typeof data.data.permissions === 'object') {
+        } else if (data.data?.permissions && typeof data.data.permissions === 'object') {
           apiPermissions = data.data.permissions;
-        }
-        // If data itself is the permissions object
-        else if (data.page_id || Object.values(data).some((val: any) => val && val.page_id)) {
+        } else if (data.page_id || data.can_view !== undefined) {
+          // Single permission object
+          apiPermissions = { [data.page_id || 'dashboard']: data };
+        } else {
+          // Assume the data itself is the permissions object
           apiPermissions = data;
         }
-      }
-      
-      // Validate that we have valid permissions
-      const hasValidPermissions = Object.keys(apiPermissions).length > 0 && 
-        Object.values(apiPermissions).every((perm: any) => 
-          perm && typeof perm === 'object' && 
-          typeof perm.can_view === 'boolean'
-        );
-      
-      if (hasValidPermissions) {
-        setPermissions(apiPermissions);
-        console.log('✅ Permissions loaded from API:', apiPermissions);
+        
+        console.log('🔧 Processed permissions:', apiPermissions);
+        
+        // Validate and set permissions
+        const validatedPermissions = validatePermissions(apiPermissions);
+        setPermissions(validatedPermissions);
+        
+        console.log('✅ Final validated permissions:', validatedPermissions);
       } else {
-        console.warn('⚠️ Invalid permissions structure from API, using defaults');
-        setPermissions(defaultPermissions);
+        throw new Error('Invalid permissions data structure');
       }
       
-    } catch (err: any) {
-      console.warn('📋 API not available, using default permissions:', err);
-      setError('API not available');
-      setPermissions(defaultPermissions); // Use default permissions as fallback
+    } catch (error: any) {
+      console.warn('📋 API not available, using default permissions:', error.message);
+      setError(error.message);
+      setPermissions(DEFAULT_PERMISSIONS);
     } finally {
       setLoading(false);
     }
   };
 
-  const hasPermission = (pageId: string, action: 'view' | 'create' | 'edit' | 'delete' | 'export'): boolean => {
+  useEffect(() => {
+    fetchUserPermissions();
+  }, []);
+
+  // Safe permission check function
+  const hasPermission = (pageId: string, action: keyof Permission): boolean => {
     try {
-      // Extra safety checks
-      if (!permissions || typeof permissions !== 'object') {
-        console.warn('Permissions object is invalid, using false');
+      if (!pageId || !action) {
+        console.warn('📋 Invalid permission check parameters');
         return false;
       }
-
+      
       const permission = permissions[pageId];
       if (!permission || typeof permission !== 'object') {
-        console.warn(`Permission for pageId ${pageId} not found or invalid`);
+        console.warn(`📋 No permission found for page: ${pageId}`);
         return false;
       }
-
-      // Ensure all required properties exist
-      if (typeof permission.can_view !== 'boolean' ||
-          typeof permission.can_create !== 'boolean' ||
-          typeof permission.can_edit !== 'boolean' ||
-          typeof permission.can_delete !== 'boolean' ||
-          typeof permission.can_export !== 'boolean') {
-        console.warn(`Permission object for ${pageId} has invalid structure:`, permission);
-        return false;
-      }
-
-      switch (action) {
-        case 'view': return Boolean(permission.can_view);
-        case 'create': return Boolean(permission.can_create);
-        case 'edit': return Boolean(permission.can_edit);
-        case 'delete': return Boolean(permission.can_delete);
-        case 'export': return Boolean(permission.can_export);
-        default: 
-          console.warn(`Invalid action: ${action}`);
-          return false;
-      }
-    } catch (err) {
-      console.error('Error in hasPermission:', err, { pageId, action });
+      
+      const result = Boolean(permission[action]);
+      console.log(`🔍 Permission check: ${pageId}.${action} = ${result}`);
+      return result;
+    } catch (error) {
+      console.error('📋 Error in permission check:', error);
       return false;
     }
   };
 
-  const refreshPermissions = async () => {
+  // Safe page access check
+  const canAccessPage = (pageId: string): boolean => {
     try {
-      await fetchPermissions();
-    } catch (err) {
-      console.error('Error refreshing permissions:', err);
+      return hasPermission(pageId, 'can_view');
+    } catch (error) {
+      console.error('📋 Error checking page access:', error);
+      return false;
     }
   };
-
-  useEffect(() => {
-    fetchPermissions();
-  }, []);
 
   return (
     <PermissionsContext.Provider value={{
@@ -181,7 +169,8 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
       loading,
       error,
       hasPermission,
-      refreshPermissions
+      canAccessPage,
+      refetch: fetchUserPermissions
     }}>
       {children}
     </PermissionsContext.Provider>
