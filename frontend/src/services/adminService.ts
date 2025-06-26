@@ -54,39 +54,70 @@ export class AdminService {
   }
 
   /**
-   * Fetch system statistics
+   * Fetch system statistics - MOCK VERSION FOR DEMO
    */
   static async fetchStatistics(): Promise<AdminStatistics> {
-    try {
-      const response = await api.get(API_ENDPOINTS.ADMIN.STATISTICS);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch statistics`);
-      }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchStatistics error:', error);
-      throw new Error(`Failed to fetch statistics: ${error.message}`);
-    }
+    console.log('🎭 Using mock admin statistics - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return {
+      totalUsers: 28,
+      activeUsers: 24,
+      totalProjects: 18,
+      totalBudget: 125000000
+    };
   }
 
   /**
-   * Fetch recent activity
+   * Fetch recent activity - MOCK VERSION FOR DEMO
    */
   static async fetchRecentActivity(limit: number = 5): Promise<RecentActivity[]> {
-    try {
-      const response = await api.get(`${API_ENDPOINTS.ADMIN.AUDIT_LOG}?limit=${limit}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch recent activity`);
+    console.log('🎭 Using mock recent activity - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 250));
+    
+    const activities: RecentActivity[] = [
+      {
+        id: '1',
+        action: 'עדכון פרויקט',
+        user: 'משה כהן',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        details: 'עדכן את סטטוס הפרויקט לפעיל'
+      },
+      {
+        id: '2',
+        action: 'יצירת טבר חדש',
+        user: 'שרה לוי',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+        details: 'יצר טבר חדש עבור פרויקט התחבורה'
+      },
+      {
+        id: '3',
+        action: 'אישור תקציב',
+        user: 'דני אברהם',
+        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+        details: 'אישר תקציב נוסף עבור פרויקט החינוך'
+      },
+      {
+        id: '4',
+        action: 'העלאת מסמך',
+        user: 'רחל מזרחי',
+        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+        details: 'העלה תיעוד טכני לפרויקט הפארקים'
+      },
+      {
+        id: '5',
+        action: 'הוספת אבן דרך',
+        user: 'יוסי רוזן',
+        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        details: 'הוסיף אבן דרך חדשה לפרויקט התשתית'
       }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchRecentActivity error:', error);
-      throw new Error(`Failed to fetch recent activity: ${error.message}`);
-    }
+    ];
+    
+    return activities.slice(0, limit);
   }
 
   /**

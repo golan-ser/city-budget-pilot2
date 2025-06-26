@@ -36,85 +36,92 @@ export interface TabarBudgetReport {
 
 export class ReportsService {
   /**
-   * Fetch budget items report
+   * Fetch budget items report - MOCK VERSION FOR DEMO
    */
   static async fetchBudgetItems(filters?: ReportFilters): Promise<any[]> {
-    const queryString = filters ? `?${new URLSearchParams(filters as any).toString()}` : '';
-    const response = await api.get(`${API_ENDPOINTS.REPORTS.BUDGET_ITEMS}${queryString}`);
+    console.log('🎭 Using mock budget items report - API disabled');
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch budget items report');
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 400));
     
-    return response.json();
+    return this.getMockBudgetItems(filters);
   }
 
   /**
-   * Export budget items report as Excel
+   * Export budget items report as Excel - MOCK VERSION FOR DEMO
    */
   static async exportBudgetItemsExcel(filters?: ReportFilters): Promise<Blob> {
-    const queryString = filters ? `?${new URLSearchParams(filters as any).toString()}` : '';
-    const response = await api.get(`${API_ENDPOINTS.REPORTS_BUDGET_ITEMS}/export/excel${queryString}`);
+    console.log('🎭 Mock Excel export - API disabled');
     
-    if (!response.ok) {
-      throw new Error('Failed to export budget items report');
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    return response.blob();
+    const mockData = this.getMockBudgetItems(filters);
+    const csvContent = this.convertToCSV(mockData);
+    
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
   }
 
   /**
-   * Fetch full tabar report
+   * Fetch full tabar report - MOCK VERSION FOR DEMO
    */
   static async fetchFullTabar(filters?: ReportFilters): Promise<FullTabarReport> {
-    const queryString = filters ? `?${new URLSearchParams(filters as any).toString()}` : '';
-    const response = await api.get(`${API_ENDPOINTS.REPORTS.FULL_TABAR}${queryString}`);
+    console.log('🎭 Using mock full tabar report - API disabled');
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch full tabar report');
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    return response.json();
+    return {
+      data: this.getMockTabarData(),
+      totals: {
+        totalBudget: 125000000,
+        totalExecuted: 89000000,
+        utilizationRate: 71.2,
+        totalProjects: 18
+      }
+    };
   }
 
   /**
-   * Export full tabar report as Excel
+   * Export full tabar report as Excel - MOCK VERSION FOR DEMO
    */
   static async exportFullTabarExcel(filters?: ReportFilters): Promise<Blob> {
-    const queryString = filters ? `?${new URLSearchParams(filters as any).toString()}` : '';
-    const response = await api.get(`${API_ENDPOINTS.REPORTS.FULL_TABAR}/export/excel${queryString}`);
+    console.log('🎭 Mock full tabar Excel export - API disabled');
     
-    if (!response.ok) {
-      throw new Error('Failed to export full tabar report');
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 900));
     
-    return response.blob();
+    const mockData = this.getMockTabarData();
+    const csvContent = this.convertToCSV(mockData);
+    
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
   }
 
   /**
-   * Fetch tabar budget report
+   * Fetch tabar budget report - MOCK VERSION FOR DEMO
    */
   static async fetchTabarBudget(filters?: ReportFilters): Promise<any[]> {
-    const queryString = filters ? `?${new URLSearchParams(filters as any).toString()}` : '';
-    const response = await api.get(`${API_ENDPOINTS.REPORTS.BUDGET_ITEMS_REPORT}${queryString}`);
+    console.log('🎭 Using mock tabar budget report - API disabled');
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch tabar budget report');
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 350));
     
-    return response.json();
+    return this.getMockBudgetReport();
   }
 
   /**
-   * Export tabar budget report as Excel
+   * Export tabar budget report as Excel - MOCK VERSION FOR DEMO
    */
   static async exportTabarBudgetExcel(data?: any): Promise<Blob> {
-    // For now, create a simple Excel blob
-    // In production, this should call the backend API
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      data?.map((row: any) => Object.values(row).join(",")).join("\n");
+    console.log('🎭 Mock tabar budget Excel export - API disabled');
     
-    return new Blob([csvContent], { type: 'text/csv' });
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    const exportData = data || this.getMockBudgetReport();
+    const csvContent = this.convertToCSV(exportData);
+    
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
   }
 
   /**
@@ -129,5 +136,143 @@ export class ReportsService {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Get mock budget items data
+   */
+  private static getMockBudgetItems(filters?: ReportFilters): BudgetItem[] {
+    const budgetItems: BudgetItem[] = [
+      {
+        id: 1,
+        name: 'תשתית דרכים',
+        department: 'משרד התחבורה',
+        status: 'פעיל',
+        approved_budget: 15000000,
+        executed_budget: 12500000,
+        fiscal_year: 2024,
+        tabar_id: 1,
+        created_at: '2024-01-15T10:00:00Z',
+        notes: 'פרויקט בביצוע מתקדם'
+      },
+      {
+        id: 2,
+        name: 'חינוך דיגיטלי',
+        department: 'משרד החינוך',
+        status: 'בתכנון',
+        approved_budget: 8500000,
+        executed_budget: 2100000,
+        fiscal_year: 2024,
+        tabar_id: 2,
+        created_at: '2024-02-01T10:00:00Z',
+        notes: 'בשלבי תכנון מפורט'
+      },
+      {
+        id: 3,
+        name: 'פארקים עירוניים',
+        department: 'מחלקת פיתוח',
+        status: 'פעיל',
+        approved_budget: 6200000,
+        executed_budget: 4800000,
+        fiscal_year: 2024,
+        tabar_id: 3,
+        created_at: '2024-01-20T10:00:00Z',
+        notes: 'התקדמות טובה'
+      }
+    ];
+
+    // Apply simple filtering
+    let filtered = budgetItems;
+    if (filters?.status) {
+      filtered = filtered.filter(item => item.status === filters.status);
+    }
+    if (filters?.dateFrom) {
+      filtered = filtered.filter(item => item.created_at >= filters.dateFrom!);
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Get mock tabar data
+   */
+  private static getMockTabarData(): any[] {
+    return [
+      {
+        tabar_number: 'TB-2024-001',
+        name: 'פרויקט תשתית דרכים',
+        department: 'משרד התחבורה',
+        status: 'פעיל',
+        budget: 15000000,
+        executed: 12500000,
+        percentage: 83.3
+      },
+      {
+        tabar_number: 'TB-2024-002',
+        name: 'פרויקט חינוך דיגיטלי',
+        department: 'משרד החינוך',
+        status: 'בתכנון',
+        budget: 8500000,
+        executed: 2100000,
+        percentage: 24.7
+      },
+      {
+        tabar_number: 'TB-2024-003',
+        name: 'פרויקט פארקים עירוניים',
+        department: 'מחלקת פיתוח',
+        status: 'פעיל',
+        budget: 6200000,
+        executed: 4800000,
+        percentage: 77.4
+      }
+    ];
+  }
+
+  /**
+   * Get mock budget report data
+   */
+  private static getMockBudgetReport(): any[] {
+    return [
+      {
+        ministry: 'משרד התחבורה',
+        approved: 45000000,
+        executed: 32000000,
+        percentage: 71.1,
+        status: 'טוב'
+      },
+      {
+        ministry: 'משרד החינוך',
+        approved: 35000000,
+        executed: 28000000,
+        percentage: 80.0,
+        status: 'מעולה'
+      },
+      {
+        ministry: 'משרד הבריאות',
+        approved: 25000000,
+        executed: 18000000,
+        percentage: 72.0,
+        status: 'טוב'
+      }
+    ];
+  }
+
+  /**
+   * Convert data to CSV format
+   */
+  private static convertToCSV(data: any[]): string {
+    if (!data || data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => 
+        typeof row[header] === 'string' && row[header].includes(',') 
+          ? `"${row[header]}"` 
+          : row[header]
+      ).join(','))
+    ].join('\n');
+    
+    return csvContent;
   }
 } 
