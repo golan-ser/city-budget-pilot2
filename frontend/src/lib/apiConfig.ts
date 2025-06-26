@@ -1,8 +1,8 @@
-// API Configuration
+// API Configuration - Updated for new Vercel domain
 export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 
   (import.meta.env.MODE === 'production' 
-    ? 'https://impartial-luck-production.up.railway.app/api'
-    : '/api');
+    ? 'https://impartial-luck-production.up.railway.app'
+    : 'http://localhost:3000');
 
 // API endpoints
 export const API_ENDPOINTS = {

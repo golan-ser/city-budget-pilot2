@@ -42,20 +42,42 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Strict CORS configuration
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://city-budget-pilot2.vercel.app',
-    'https://city-budget-pilot2-207f5wt8i-fintecity.vercel.app',
-    'https://city-budget-frontend-v2.vercel.app',
-    'https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app'
-  ],
+// Enhanced CORS configuration with proper header handling
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://city-budget-pilot2.vercel.app',
+      'https://city-budget-pilot2-207f5wt8i-fintecity.vercel.app',
+      'https://city-budget-frontend-v2.vercel.app',
+      'https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`🚫 CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-token']
-}));
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'x-demo-token',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb', charset: 'utf-8' }));

@@ -64,19 +64,28 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
 
     const validated: PermissionsData = {};
     
-    // Validate each permission entry
-    Object.keys(DEFAULT_PERMISSIONS).forEach(pageId => {
-      validated[pageId] = validatePermission(data[pageId]);
-    });
+    try {
+      // Validate each permission entry
+      Object.keys(DEFAULT_PERMISSIONS).forEach(pageId => {
+        if (data[pageId]) {
+          validated[pageId] = validatePermission(data[pageId]);
+        } else {
+          validated[pageId] = DEFAULT_PERMISSIONS[pageId];
+        }
+      });
 
-    // Add any additional valid permissions from data
-    Object.keys(data).forEach(pageId => {
-      if (!validated[pageId] && data[pageId]) {
-        validated[pageId] = validatePermission(data[pageId]);
-      }
-    });
+      // Add any additional valid permissions from data
+      Object.keys(data).forEach(pageId => {
+        if (!validated[pageId] && data[pageId] && typeof data[pageId] === 'object') {
+          validated[pageId] = validatePermission(data[pageId]);
+        }
+      });
 
-    return validated;
+      return validated;
+    } catch (error) {
+      console.error('📋 Error validating permissions:', error);
+      return DEFAULT_PERMISSIONS;
+    }
   };
 
   const fetchUserPermissions = async () => {

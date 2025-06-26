@@ -7,7 +7,7 @@
 NODE_ENV=production
 PORT=3000
 DATABASE_URL=your-supabase-connection-string
-ALLOWED_ORIGINS=https://city-budget-pilot2.vercel.app,https://city-budget-frontend-v2.vercel.app
+ALLOWED_ORIGINS=https://city-budget-pilot2.vercel.app,https://city-budget-frontend-v2.vercel.app,https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 DEMO_TOKEN=PRODUCTION_SECURE_TOKEN_2024
 OPENAI_API_KEY=your-openai-api-key-here
@@ -25,10 +25,13 @@ TRUST_PROXY=true
 DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
 ```
 
-### 3. **CORS Origins:**
+### 3. **CORS Origins (CRITICAL):**
 ```bash
-# Add all your frontend domains
-ALLOWED_ORIGINS=https://city-budget-pilot2.vercel.app,https://city-budget-frontend-v2.vercel.app
+# Add ALL your frontend domains - EXACT MATCH REQUIRED
+ALLOWED_ORIGINS=https://city-budget-pilot2.vercel.app,https://city-budget-frontend-v2.vercel.app,https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app
+
+# For testing only (NOT for production):
+# ALLOWED_ORIGINS=*
 ```
 
 ## 🛠️ **Deployment Steps:**
@@ -40,42 +43,43 @@ ALLOWED_ORIGINS=https://city-budget-pilot2.vercel.app,https://city-budget-fronte
 4. Select the backend folder
 
 ### Step 2: Configure Build Settings
-Railway will automatically detect the `Dockerfile` and `railway.json` configuration.
+Railway will automatically detect the `Dockerfile` and configuration.
 
 ### Step 3: Set Environment Variables
 In Railway Dashboard → Variables tab, add all the environment variables listed above.
 
+**⚠️ CRITICAL: Make sure ALLOWED_ORIGINS includes the EXACT Vercel domain:**
+`https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app`
+
 ### Step 4: Deploy
 Click "Deploy" and monitor the logs.
 
-## 🔍 **Troubleshooting:**
+## 🔍 **Troubleshooting CORS Issues:**
 
-### Common Issues:
+### Common CORS Problems:
 
-#### 1. **Database Connection Failed**
+#### 1. **Missing Domain in ALLOWED_ORIGINS**
 ```bash
-# Check DATABASE_URL format
-# Ensure Supabase allows connections from Railway IPs
-# Verify database credentials
+# Error: "No 'Access-Control-Allow-Origin' header is present"
+# Solution: Add the EXACT domain to ALLOWED_ORIGINS
 ```
 
-#### 2. **CORS Errors**
+#### 2. **Preflight Request Failures**
 ```bash
-# Update ALLOWED_ORIGINS with your actual domains
-# Include both www and non-www versions if needed
+# Error: "Response to preflight request doesn't pass access control check"
+# Solution: Ensure OPTIONS method is allowed and headers are configured
 ```
 
-#### 3. **Build Failures**
+#### 3. **Environment Variables Not Applied**
 ```bash
-# Check logs for specific error messages
-# Ensure all dependencies are in package.json
-# Verify Node.js version compatibility
+# After updating ALLOWED_ORIGINS, always REDEPLOY Railway
+# Variables are only applied after deployment
 ```
 
 ## 📊 **Health Check:**
 Once deployed, test the health endpoint:
 ```bash
-curl https://your-railway-domain.up.railway.app/health
+curl https://impartial-luck-production.up.railway.app/health
 ```
 
 Expected response:
@@ -89,9 +93,14 @@ Expected response:
 
 ## 🎯 **Post-Deployment:**
 1. Update frontend `VITE_API_URL` to point to Railway domain
-2. Test all API endpoints
+2. Test all API endpoints with CORS
 3. Monitor logs for any errors
 4. Set up monitoring/alerts if needed
 
+## 🚨 **Current Status:**
+- **Backend URL:** `https://impartial-luck-production.up.railway.app`
+- **Frontend URL:** `https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app`
+- **Status:** CORS configuration updated, needs Railway redeploy
+
 ---
-**📞 Support:** If deployment fails, check Railway logs and ensure all environment variables are set correctly. 
+**📞 Support:** If CORS errors persist, ensure ALLOWED_ORIGINS in Railway matches EXACTLY the frontend domain. 

@@ -14,9 +14,17 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { usePermissions } from "../hooks/usePermissions"
 import { Button } from "./ui/button"
+import { ErrorHandler } from "../utils/errorHandling"
 
 // Define menu items with their corresponding page IDs from database
-const MENU_ITEMS = [
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: any;
+  pageId: number;
+}
+
+const MENU_ITEMS: MenuItem[] = [
   { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard, pageId: 1 },
   { title: "דיווחים", url: "/reports-management", icon: FileText, pageId: 11 },
   { title: "ניהול פרויקטים", url: "/projects", icon: FolderKanban, pageId: 2 },
@@ -31,12 +39,18 @@ export function AppSidebar() {
   const currentPath = location.pathname
   const [isCollapsed, setIsCollapsed] = React.useState(false)
   const { user, logout } = useAuth()
-  const { canViewPage, loading: permissionsLoading } = usePermissions()
+  const { canAccessPage, loading: permissionsLoading } = usePermissions()
   
-  // Filter menu items based on user permissions
-  const visibleItems = MENU_ITEMS.filter(item => {
+  // Filter menu items based on user permissions using safe filter
+  const visibleItems = ErrorHandler.safeFilter<MenuItem>(MENU_ITEMS, (item: MenuItem) => {
     if (permissionsLoading) return false; // Hide all items while loading permissions
-    return canViewPage(item.pageId);
+    try {
+      // Convert pageId to string for consistency with permissions system
+      return canAccessPage(item.pageId.toString());
+    } catch (error) {
+      console.warn(`Error checking permissions for page ${item.pageId}:`, error);
+      return false;
+    }
   });
 
   const isActive = (path: string) => {

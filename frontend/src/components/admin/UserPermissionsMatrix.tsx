@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { api } from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/apiConfig';
+import { ErrorHandler } from '@/utils/errorHandling';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -110,34 +113,24 @@ const UserPermissionsMatrix: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/tenants', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch tenants');
+      const response = await api.get(API_ENDPOINTS.ADMIN.TENANTS);
       const data = await response.json();
-      setTenants(data.filter((t: Tenant) => t.status === 'active'));
+      const filteredTenants = ErrorHandler.safeFilter<Tenant>(data, (t: Tenant) => t.status === 'active');
+      setTenants(filteredTenants);
     } catch (err) {
+      console.error('Error fetching tenants:', err);
       setError('שגיאה בטעינת רשויות');
     }
   };
 
   const fetchSystems = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/systems', {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch systems');
+      const response = await api.get(API_ENDPOINTS.ADMIN.SYSTEMS);
       const data = await response.json();
-      setSystems(data.filter((s: System) => s.is_active));
+      const filteredSystems = ErrorHandler.safeFilter<System>(data, (s: System) => s.is_active);
+      setSystems(filteredSystems);
     } catch (err) {
+      console.error('Error fetching systems:', err);
       setError('שגיאה בטעינת מערכות');
     }
   };
@@ -146,20 +139,13 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/users?tenantId=${selectedTenant}`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch users');
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?tenantId=${selectedTenant}`);
       const result = await response.json();
       console.log('Users API response:', result); // Debug log
       
       // Handle both formats: direct data or wrapped in data object
       const data = result.data || result;
-      const activeUsers = Array.isArray(data) ? data.filter((u: User) => u.status === 'active') : [];
+      const activeUsers = ErrorHandler.safeFilter<User>(data, (u: User) => u.status === 'active');
       console.log('Filtered users:', activeUsers); // Debug log
       
       setUsers(activeUsers);
