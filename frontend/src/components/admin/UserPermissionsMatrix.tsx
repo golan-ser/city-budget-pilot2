@@ -160,14 +160,8 @@ const UserPermissionsMatrix: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://localhost:3000/api/admin/permissions/user?tenantId=${selectedTenant}&systemId=${selectedSystem}&userId=${selectedUser}`,
-        {
-          headers: {
-            'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await api.get(
+        `${API_ENDPOINTS.ADMIN.PERMISSIONS}/user?tenantId=${selectedTenant}&systemId=${selectedSystem}&userId=${selectedUser}`
       );
 
       if (!response.ok) throw new Error('Failed to fetch user permissions');
@@ -269,14 +263,7 @@ const UserPermissionsMatrix: React.FC = () => {
         system_id: selectedSystem
       }));
 
-      const response = await fetch('http://localhost:3000/api/admin/permissions/user', {
-        method: 'POST',
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ permissions: permissionsToSave })
-      });
+      const response = await api.post(`${API_ENDPOINTS.ADMIN.PERMISSIONS}/user`, { permissions: permissionsToSave });
 
       if (!response.ok) throw new Error('Failed to save permissions');
       

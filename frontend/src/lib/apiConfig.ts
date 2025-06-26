@@ -1,8 +1,10 @@
-// API Configuration - Updated for new Vercel domain
+// API Configuration - Force production URL for Vercel deployment
 export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
     ? 'https://impartial-luck-production.up.railway.app'
-    : 'http://localhost:3000');
+    : import.meta.env.MODE === 'production' 
+      ? 'https://impartial-luck-production.up.railway.app'
+      : 'http://localhost:3000');
 
 // API endpoints
 export const API_ENDPOINTS = {

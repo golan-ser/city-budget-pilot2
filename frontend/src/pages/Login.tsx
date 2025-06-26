@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Lock, Mail, Building2, AlertCircle } from 'lucide-react';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/apiConfig';
 
 interface LoginFormData {
   email: string;
@@ -62,7 +63,7 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
