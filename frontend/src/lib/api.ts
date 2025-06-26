@@ -22,6 +22,9 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    // Fallback to demo token for development/testing
+    headers['x-demo-token'] = 'DEMO_SECURE_TOKEN_2024';
   }
   
   return headers;
