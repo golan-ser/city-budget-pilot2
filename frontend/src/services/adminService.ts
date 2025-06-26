@@ -121,21 +121,30 @@ export class AdminService {
   }
 
   /**
-   * Fetch tenants
+   * Fetch tenants - MOCK VERSION FOR DEMO
    */
   static async fetchTenants(): Promise<any[]> {
-    try {
-      const response = await api.get(API_ENDPOINTS.ADMIN.TENANTS);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch tenants`);
+    console.log('🎭 Using mock tenants data - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return [
+      {
+        id: 1,
+        name: 'עיריית ירושלים',
+        code: 'JER001',
+        status: 'פעיל',
+        created_date: '2024-01-01'
+      },
+      {
+        id: 2,  
+        name: 'עיריית תל אביב',
+        code: 'TLV001',
+        status: 'פעיל',
+        created_date: '2024-01-15'
       }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchTenants error:', error);
-      throw new Error(`Failed to fetch tenants: ${error.message}`);
-    }
+    ];
   }
 
   /**
@@ -349,40 +358,73 @@ export class AdminService {
   }
 
   /**
-   * Fetch audit log
+   * Fetch audit log - MOCK VERSION FOR DEMO
    */
   static async fetchAuditLog(params?: any): Promise<any> {
-    try {
-      const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
-      const response = await api.get(`${API_ENDPOINTS.ADMIN.AUDIT_LOG}${queryString}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch audit log`);
-      }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchAuditLog error:', error);
-      throw new Error(`Failed to fetch audit log: ${error.message}`);
-    }
+    console.log('🎭 Using mock audit log data - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 250));
+    
+    return {
+      data: [
+        {
+          id: 1,
+          action: 'LOGIN',
+          user_id: 'demo',
+          user_name: 'משתמש דמו',
+          resource_type: 'AUTH',
+          resource_id: null,
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          ip_address: '127.0.0.1',
+          details: 'התחברות למערכת'
+        },
+        {
+          id: 2,
+          action: 'VIEW',
+          user_id: 'demo',
+          user_name: 'משתמש דמו',
+          resource_type: 'PROJECT',
+          resource_id: '101',
+          timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+          ip_address: '127.0.0.1',
+          details: 'צפייה בפרויקט תב"ר 101'
+        },
+        {
+          id: 3,
+          action: 'EDIT',
+          user_id: 'demo',
+          user_name: 'משתמש דמו',
+          resource_type: 'TABAR',
+          resource_id: '102',
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          ip_address: '127.0.0.1',
+          details: 'עריכת טבר 102'
+        }
+      ],
+      total: 3
+    };
   }
 
   /**
-   * Fetch locked users
+   * Fetch locked users - MOCK VERSION FOR DEMO
    */
   static async fetchLockedUsers(): Promise<any[]> {
-    try {
-      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}/locked`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch locked users`);
+    console.log('🎭 Using mock locked users data - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    return [
+      {
+        id: 'user123',
+        username: 'משתמש נעול',
+        email: 'locked@example.com',
+        locked_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        locked_reason: 'הזנת סיסמה שגויה 3 פעמים',
+        lock_duration: 24
       }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchLockedUsers error:', error);
-      throw new Error(`Failed to fetch locked users: ${error.message}`);
-    }
+    ];
   }
 
   /**
@@ -418,20 +460,33 @@ export class AdminService {
   }
 
   /**
-   * Fetch users
+   * Fetch users - MOCK VERSION FOR DEMO
    */
   static async fetchUsers(): Promise<any[]> {
-    try {
-      const response = await api.get(API_ENDPOINTS.ADMIN.USERS);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch users`);
+    console.log('🎭 Using mock users data - API disabled');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return [
+      {
+        id: 'demo',
+        username: 'דמו',
+        email: 'demo@city.gov.il',
+        role: 'מנהל',
+        status: 'פעיל',
+        last_login: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        created_at: '2024-01-01T00:00:00Z'
+      },
+      {
+        id: 'user2',
+        username: 'משה כהן',
+        email: 'moshe@city.gov.il',
+        role: 'משתמש',
+        status: 'פעיל',
+        last_login: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        created_at: '2024-01-15T00:00:00Z'
       }
-      
-      return response.json();
-    } catch (error: any) {
-      console.error('AdminService.fetchUsers error:', error);
-      throw new Error(`Failed to fetch users: ${error.message}`);
-    }
+    ];
   }
 } 

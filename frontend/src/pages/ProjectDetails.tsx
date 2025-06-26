@@ -26,6 +26,7 @@ import AddDocumentModal from '../components/AddDocumentModal';
 import AddExecutionReportModal from '../components/AddExecutionReportModal';
 import ProjectDocuments from '../components/ProjectDocuments';
 import UploadDocumentModal from '../components/UploadDocumentModal';
+import { ProjectsService } from '@/services/projectsService';
 
 interface Project {
   id: number;
