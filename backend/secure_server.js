@@ -49,7 +49,8 @@ app.use(cors({
     'http://localhost:3000',
     'https://city-budget-pilot2.vercel.app',
     'https://city-budget-pilot2-207f5wt8i-fintecity.vercel.app',
-    'https://city-budget-frontend-v2.vercel.app'
+    'https://city-budget-frontend-v2.vercel.app',
+    'https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
