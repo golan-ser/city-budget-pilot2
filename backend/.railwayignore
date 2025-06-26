@@ -1,0 +1,34 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore logs and debug info
+*.log
+*.tmp
+
+# Ignore dotenv and sensitive config
+.env
+.env.local
+.env.*.local
+
+# Ignore uploads or large generated files
+uploads/
+output/
+dist/
+coverage/
+
+# Ignore frontend code (if backend is deployed בנפרד)
+frontend/
+public/
+
+# Ignore build artifacts
+*.tsbuildinfo
+
+# Ignore test-related files
+__tests__/
+tests/
+*.test.js
+*.spec.js
+
+# Ignore system files
+.DS_Store
+Thumbs.db
