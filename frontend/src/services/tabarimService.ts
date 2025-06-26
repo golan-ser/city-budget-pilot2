@@ -3,11 +3,21 @@ import { API_ENDPOINTS } from '@/lib/apiConfig';
 
 export interface Tabar {
   id: string;
-  tabar_number: string;
+  tabar_number: string | number;
   name: string;
   description?: string;
   status: string;
   budget: number;
+  total_authorized: number;
+  utilized: number;
+  utilization_percentage: number;
+  ministry: string;
+  department: string;
+  year: number;
+  open_date: string;
+  close_date: string | null;
+  permission_number: string;
+  municipal_participation: number;
   // Add more fields as needed
 }
 
@@ -211,7 +221,17 @@ export class TabarimService {
         name: 'פרויקט תשתית דרכים מרכזיות',
         description: 'שיפור ופיתוח תשתית דרכים במרכז העיר',
         status: 'פעיל',
-        budget: 15000000
+        budget: 15000000,
+        total_authorized: 15000000,
+        utilized: 12500000,
+        utilization_percentage: 83.3,
+        ministry: 'משרד התחבורה',
+        department: 'תחבורה ותשתיות',
+        year: 2024,
+        open_date: '2024-01-15',
+        close_date: null,
+        permission_number: 'T-001-2024',
+        municipal_participation: 3000000
       },
       {
         id: '2',
@@ -219,7 +239,17 @@ export class TabarimService {
         name: 'פרויקט חינוך דיגיטלי',
         description: 'הטמעת טכנולוגיות דיגיטליות בבתי ספר',
         status: 'בתכנון',
-        budget: 8500000
+        budget: 8500000,
+        total_authorized: 8500000,
+        utilized: 2100000,
+        utilization_percentage: 24.7,
+        ministry: 'משרד החינוך',
+        department: 'חינוך ותרבות',
+        year: 2024,
+        open_date: '2024-02-01',
+        close_date: null,
+        permission_number: 'E-002-2024',
+        municipal_participation: 1700000
       },
       {
         id: '3',
@@ -227,7 +257,17 @@ export class TabarimService {
         name: 'פרויקט פארקים עירוניים',
         description: 'הקמת ושיפוץ פארקים ומרחבים ציבוריים',
         status: 'פעיל',
-        budget: 6200000
+        budget: 6200000,
+        total_authorized: 6200000,
+        utilized: 4800000,
+        utilization_percentage: 77.4,
+        ministry: 'משרד הפנים',
+        department: 'פיתוח ותכנון עירוני',
+        year: 2024,
+        open_date: '2024-01-20',
+        close_date: null,
+        permission_number: 'P-003-2024',
+        municipal_participation: 1240000
       },
       {
         id: '4',
@@ -235,7 +275,17 @@ export class TabarimService {
         name: 'פרויקט תחבורה ציבורית',
         description: 'שיפור רשת התחבורה הציבורית בעיר',
         status: 'בהמתנה',
-        budget: 12000000
+        budget: 12000000,
+        total_authorized: 12000000,
+        utilized: 800000,
+        utilization_percentage: 6.7,
+        ministry: 'משרד התחבורה',
+        department: 'תחבורה ציבורית',
+        year: 2024,
+        open_date: '2024-03-01',
+        close_date: null,
+        permission_number: 'T-004-2024',
+        municipal_participation: 2400000
       },
       {
         id: '5',
@@ -243,7 +293,17 @@ export class TabarimService {
         name: 'פרויקט מרכז קהילתי',
         description: 'הקמת מרכז קהילתי חדש באזור הדרום',
         status: 'הושלם',
-        budget: 4500000
+        budget: 4500000,
+        total_authorized: 4500000,
+        utilized: 4500000,
+        utilization_percentage: 100.0,
+        ministry: 'משרד הרווחה',
+        department: 'שירותים קהילתיים',
+        year: 2023,
+        open_date: '2023-06-01',
+        close_date: '2024-05-15',
+        permission_number: 'W-005-2023',
+        municipal_participation: 900000
       },
       {
         id: '6',
@@ -251,7 +311,17 @@ export class TabarimService {
         name: 'פרויקט אנרגיה מתחדשת',
         description: 'התקנת פאנלים סולאריים במבני הציבור',
         status: 'פעיל',
-        budget: 9800000
+        budget: 9800000,
+        total_authorized: 9800000,
+        utilized: 5880000,
+        utilization_percentage: 60.0,
+        ministry: 'משרד האנרגיה',
+        department: 'אנרגיה מתחדשת',
+        year: 2024,
+        open_date: '2024-01-10',
+        close_date: null,
+        permission_number: 'E-006-2024',
+        municipal_participation: 1960000
       },
       {
         id: '7',
@@ -259,7 +329,17 @@ export class TabarimService {
         name: 'פרויקט דיור ציבורי',
         description: 'הקמת יחידות דיור בהישג יד',
         status: 'בתכנון',
-        budget: 25000000
+        budget: 25000000,
+        total_authorized: 25000000,
+        utilized: 1250000,
+        utilization_percentage: 5.0,
+        ministry: 'משרד הבינוי והשיכון',
+        department: 'דיור ציבורי',
+        year: 2024,
+        open_date: '2024-04-01',
+        close_date: null,
+        permission_number: 'H-007-2024',
+        municipal_participation: 5000000
       },
       {
         id: '8',
@@ -267,7 +347,35 @@ export class TabarimService {
         name: 'פרויקט ביוב ומים',
         description: 'שיפור מערכת הביוב והמים העירונית',
         status: 'פעיל',
-        budget: 18000000
+        budget: 18000000,
+        total_authorized: 18000000,
+        utilized: 10800000,
+        utilization_percentage: 60.0,
+        ministry: 'רשות המים',
+        department: 'תשתיות מים וביוב',
+        year: 2024,
+        open_date: '2024-02-15',
+        close_date: null,
+        permission_number: 'W-008-2024',
+        municipal_participation: 3600000
+      },
+      {
+        id: '101',
+        tabar_number: 101,
+        name: 'פרויקט מיוחד 101',
+        description: 'פרויקט מיוחד לבדיקות מערכת',
+        status: 'פעיל',
+        budget: 5000000,
+        total_authorized: 5000000,
+        utilized: 3500000,
+        utilization_percentage: 70.0,
+        ministry: 'משרד הפנים',
+        department: 'פיתוח מערכות',
+        year: 2024,
+        open_date: '2024-01-01',
+        close_date: null,
+        permission_number: 'SYS-101-2024',
+        municipal_participation: 1000000
       }
     ];
   }

@@ -19,7 +19,7 @@ import {
 interface Project {
   id: number;
   name: string;
-  tabar_number: number;
+  tabar_number: number | string;
   year: number;
   ministry: string;
   department: string;
@@ -50,12 +50,12 @@ const Projects = () => {
         console.log('Tabarim data received:', data);
         console.log('First item details:', data[0]);
         console.log('Utilization check:', {
-          tabar_101: data.find(t => t.tabar_number === 101),
+          tabar_101: data.find(t => t.tabar_number === '101' || t.tabar_number === 101),
           all_utilized: data.map(t => ({ number: t.tabar_number, utilized: t.utilized, percentage: t.utilization_percentage }))
         });
         
         // Additional debug for tabar 101 specifically
-        const tabar101 = data.find(t => t.tabar_number === 101);
+        const tabar101 = data.find(t => t.tabar_number === '101' || t.tabar_number === 101);
         if (tabar101) {
           console.log('🎯 TABAR 101 DETAILED CHECK:', {
             id: tabar101.id,
@@ -101,7 +101,8 @@ const Projects = () => {
     return 'text-green-600';
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (!amount || isNaN(amount)) return '₪0';
     return `₪${amount.toLocaleString()}`;
   };
 
@@ -229,14 +230,14 @@ const Projects = () => {
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <span>ניצול תקציב</span>
-                      <span className={`font-medium ${getUtilizationColor(project.utilization_percentage)}`}>
-                        {project.utilization_percentage}%
+                      <span className={`font-medium ${getUtilizationColor(project.utilization_percentage || 0)}`}>
+                        {(project.utilization_percentage || 0).toFixed(1)}%
                       </span>
                     </div>
-                    <Progress value={project.utilization_percentage} className="h-2" />
+                    <Progress value={project.utilization_percentage || 0} className="h-2" />
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>נוצל: {formatCurrency(project.utilized)}</span>
-                      <span>יתרה: {formatCurrency(project.total_authorized - project.utilized)}</span>
+                      <span>יתרה: {formatCurrency((project.total_authorized || 0) - (project.utilized || 0))}</span>
                     </div>
                   </div>
                 </div>
