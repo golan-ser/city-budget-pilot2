@@ -86,7 +86,7 @@ export default function BudgetItemsReport() {
       try {
         setLoading(true);
         const budgetItems = await ReportsService.fetchBudgetItems();
-        setData(budgetItems);
+          setData(budgetItems);
       } catch (error) {
         console.error('Error loading budget items:', error);
         // Fallback to mock data

@@ -39,13 +39,7 @@ export class AdminService {
       const response = await api.get(
         `${API_ENDPOINTS.ADMIN.PERMISSIONS}/user?tenantId=${tenantId}&systemId=${systemId}&userId=${userId}`
       );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch user permissions`);
-      }
-      
-      const data = await response.json();
-      return data;
+      return response;
     } catch (error: any) {
       console.error('AdminService.fetchUserPermissions error:', error);
       // Re-throw with more context
@@ -54,97 +48,81 @@ export class AdminService {
   }
 
   /**
-   * Fetch system statistics - MOCK VERSION FOR DEMO
+   * Fetch system statistics
    */
   static async fetchStatistics(): Promise<AdminStatistics> {
-    console.log('🎭 Using mock admin statistics - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return {
-      totalUsers: 28,
-      activeUsers: 24,
-      totalProjects: 18,
-      totalBudget: 125000000
-    };
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATISTICS);
+      return response;
+    } catch (error) {
+      console.error('AdminService.fetchStatistics error:', error);
+      // Fallback to mock data if API fails
+      return {
+        totalUsers: 28,
+        activeUsers: 24,
+        totalProjects: 18,
+        totalBudget: 125000000
+      };
+    }
   }
 
   /**
-   * Fetch recent activity - MOCK VERSION FOR DEMO
+   * Fetch recent activity
    */
   static async fetchRecentActivity(limit: number = 5): Promise<RecentActivity[]> {
-    console.log('🎭 Using mock recent activity - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 250));
-    
-    const activities: RecentActivity[] = [
-      {
-        id: '1',
-        action: 'עדכון פרויקט',
-        user: 'משה כהן',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        details: 'עדכן את סטטוס הפרויקט לפעיל'
-      },
-      {
-        id: '2',
-        action: 'יצירת טבר חדש',
-        user: 'שרה לוי',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        details: 'יצר טבר חדש עבור פרויקט התחבורה'
-      },
-      {
-        id: '3',
-        action: 'אישור תקציב',
-        user: 'דני אברהם',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        details: 'אישר תקציב נוסף עבור פרויקט החינוך'
-      },
-      {
-        id: '4',
-        action: 'העלאת מסמך',
-        user: 'רחל מזרחי',
-        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        details: 'העלה תיעוד טכני לפרויקט הפארקים'
-      },
-      {
-        id: '5',
-        action: 'הוספת אבן דרך',
-        user: 'יוסי רוזן',
-        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        details: 'הוסיף אבן דרך חדשה לפרויקט התשתית'
-      }
-    ];
-    
-    return activities.slice(0, limit);
+    try {
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.STATISTICS}/activity?limit=${limit}`);
+      return response;
+    } catch (error) {
+      console.error('AdminService.fetchRecentActivity error:', error);
+      // Fallback to mock data if API fails
+      const activities: RecentActivity[] = [
+        {
+          id: '1',
+          action: 'עדכון פרויקט',
+          user: 'משה כהן',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          details: 'עדכן את סטטוס הפרויקט לפעיל'
+        },
+        {
+          id: '2',
+          action: 'יצירת טבר חדש',
+          user: 'שרה לוי',
+          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          details: 'יצר טבר חדש עבור פרויקט התחבורה'
+        }
+      ];
+      return activities.slice(0, limit);
+    }
   }
 
   /**
-   * Fetch tenants - MOCK VERSION FOR DEMO
+   * Fetch tenants
    */
   static async fetchTenants(): Promise<any[]> {
-    console.log('🎭 Using mock tenants data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return [
-      {
-        id: 1,
-        name: 'עיריית ירושלים',
-        code: 'JER001',
-        status: 'פעיל',
-        created_date: '2024-01-01'
-      },
-      {
-        id: 2,  
-        name: 'עיריית תל אביב',
-        code: 'TLV001',
-        status: 'פעיל',
-        created_date: '2024-01-15'
-      }
-    ];
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.TENANTS);
+      return response;
+    } catch (error: any) {
+      console.error('AdminService.fetchTenants error:', error);
+      // Fallback to mock data if API fails
+      return [
+        {
+          id: 1,
+          name: 'עיריית ירושלים',
+          code: 'JER001',
+          status: 'פעיל',
+          created_date: '2024-01-01'
+        },
+        {
+          id: 2,  
+          name: 'עיריית תל אביב',
+          code: 'TLV001',
+          status: 'פעיל',
+          created_date: '2024-01-15'
+        }
+      ];
+    }
   }
 
   /**
@@ -358,73 +336,61 @@ export class AdminService {
   }
 
   /**
-   * Fetch audit log - MOCK VERSION FOR DEMO
+   * Fetch audit log
    */
   static async fetchAuditLog(params?: any): Promise<any> {
-    console.log('🎭 Using mock audit log data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 250));
-    
-    return {
-      data: [
-        {
-          id: 1,
-          action: 'LOGIN',
-          user_id: 'demo',
-          user_name: 'משתמש דמו',
-          resource_type: 'AUTH',
-          resource_id: null,
-          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-          ip_address: '127.0.0.1',
-          details: 'התחברות למערכת'
-        },
-        {
-          id: 2,
-          action: 'VIEW',
-          user_id: 'demo',
-          user_name: 'משתמש דמו',
-          resource_type: 'PROJECT',
-          resource_id: '101',
-          timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-          ip_address: '127.0.0.1',
-          details: 'צפייה בפרויקט תב"ר 101'
-        },
-        {
-          id: 3,
-          action: 'EDIT',
-          user_id: 'demo',
-          user_name: 'משתמש דמו',
-          resource_type: 'TABAR',
-          resource_id: '102',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          ip_address: '127.0.0.1',
-          details: 'עריכת טבר 102'
-        }
-      ],
-      total: 3
-    };
+    try {
+      let url = API_ENDPOINTS.ADMIN.AUDIT_LOG;
+      if (params) {
+        const searchParams = new URLSearchParams(params);
+        url += `?${searchParams.toString()}`;
+      }
+      
+      const response = await api.get(url);
+      return response;
+    } catch (error: any) {
+      console.error('AdminService.fetchAuditLog error:', error);
+      // Fallback to mock data if API fails
+      return {
+        data: [
+          {
+            id: 1,
+            action: 'LOGIN',
+            user_id: 'demo',
+            user_name: 'משתמש דמו',
+            resource_type: 'AUTH',
+            resource_id: null,
+            timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+            ip_address: '127.0.0.1',
+            details: 'התחברות למערכת'
+          }
+        ],
+        total: 1
+      };
+    }
   }
 
   /**
-   * Fetch locked users - MOCK VERSION FOR DEMO
+   * Fetch locked users
    */
   static async fetchLockedUsers(): Promise<any[]> {
-    console.log('🎭 Using mock locked users data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    return [
-      {
-        id: 'user123',
-        username: 'משתמש נעול',
-        email: 'locked@example.com',
-        locked_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        locked_reason: 'הזנת סיסמה שגויה 3 פעמים',
-        lock_duration: 24
-      }
-    ];
+    try {
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}/locked`);
+      return response;
+    } catch (error: any) {
+      console.error('AdminService.fetchLockedUsers error:', error);
+      // Fallback to mock data if API fails
+      return [
+        {
+          id: 'user123',
+          username: 'משתמש נעול',
+          email: 'locked@example.com',
+          locked_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          locked_reason: 'הזנת סיסמה שגויה 3 פעמים',
+          lock_duration: 24
+        }
+      ];
+    }
   }
 
   /**

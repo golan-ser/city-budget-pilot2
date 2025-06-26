@@ -7,18 +7,16 @@ export interface Tabar {
   name: string;
   description?: string;
   status: string;
-  budget: number;
   total_authorized: number;
   utilized: number;
   utilization_percentage: number;
+  year: number;
   ministry: string;
   department: string;
-  year: number;
   open_date: string;
-  close_date: string | null;
-  permission_number: string;
-  municipal_participation: number;
-  // Add more fields as needed
+  close_date?: string;
+  permission_number?: string;
+  municipal_participation?: number;
 }
 
 export interface TabarDocument {
@@ -32,34 +30,36 @@ export interface TabarDocument {
 
 export class TabarimService {
   /**
-   * Fetch all tabarim - MOCK VERSION FOR DEMO
+   * Fetch all tabarim
    */
   static async fetchAll(): Promise<Tabar[]> {
-    console.log('🎭 Using mock tabarim data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return this.getMockTabarimData();
+    try {
+      const response = await api.get(API_ENDPOINTS.TABARIM.LIST);
+      return response;
+    } catch (error) {
+      console.error('TabarimService.fetchAll error:', error);
+      // Fallback to basic mock data if API fails
+      return this.getMockTabarimData();
+    }
   }
 
   /**
-   * Fetch tabar by ID - MOCK VERSION FOR DEMO
+   * Fetch tabar by ID
    */
   static async fetchById(id: string): Promise<Tabar> {
-    console.log('🎭 Using mock tabar data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const mockData = this.getMockTabarimData();
-    const tabar = mockData.find(t => t.id === id);
-    
-    if (!tabar) {
-      throw new Error(`Tabar with id ${id} not found`);
+    try {
+      const response = await api.get(`${API_ENDPOINTS.TABARIM.DETAILS}/${id}`);
+      return response;
+    } catch (error) {
+      console.error('TabarimService.fetchById error:', error);
+      // Return mock data for this specific ID
+      const mockData = this.getMockTabarimData();
+      const tabar = mockData.find(t => t.id === id || t.tabar_number.toString() === id);
+      if (!tabar) {
+        throw new Error(`Tabar with id ${id} not found`);
+      }
+      return tabar;
     }
-    
-    return tabar;
   }
 
   /**
@@ -114,51 +114,41 @@ export class TabarimService {
   }
 
   /**
-   * Create new tabar - MOCK VERSION FOR DEMO
+   * Create new tabar
    */
-  static async createTabar(tabarData: any): Promise<any> {
-    console.log('🎭 Mock tabar creation - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const newTabar = {
-      id: `mock-${Date.now()}`,
-      tabar_number: `TB-${Date.now()}`,
-      ...tabarData,
-      status: 'בתכנון',
-      created_date: new Date().toISOString()
-    };
-    
-    return newTabar;
+  static async create(tabar: Partial<Tabar>): Promise<Tabar> {
+    try {
+      const response = await api.post(API_ENDPOINTS.TABARIM.CREATE, tabar);
+      return response;
+    } catch (error) {
+      console.error('TabarimService.create error:', error);
+      throw new Error('Failed to create tabar');
+    }
   }
 
   /**
-   * Update tabar - MOCK VERSION FOR DEMO
+   * Update existing tabar
    */
-  static async updateTabar(tabarId: string, tabarData: any): Promise<any> {
-    console.log('🎭 Mock tabar update - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    return {
-      id: tabarId,
-      ...tabarData,
-      updated_date: new Date().toISOString()
-    };
+  static async update(id: string, tabar: Partial<Tabar>): Promise<Tabar> {
+    try {
+      const response = await api.put(`${API_ENDPOINTS.TABARIM.UPDATE}/${id}`, tabar);
+      return response;
+    } catch (error) {
+      console.error('TabarimService.update error:', error);
+      throw new Error('Failed to update tabar');
+    }
   }
 
   /**
-   * Delete tabar - MOCK VERSION FOR DEMO
+   * Delete tabar
    */
-  static async deleteTabar(tabarId: string): Promise<void> {
-    console.log('🎭 Mock tabar deletion - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    console.log(`Mock: Tabar ${tabarId} deleted successfully`);
+  static async delete(id: string): Promise<void> {
+    try {
+      await api.delete(`${API_ENDPOINTS.TABARIM.DELETE}/${id}`);
+    } catch (error) {
+      console.error('TabarimService.delete error:', error);
+      throw new Error('Failed to delete tabar');
+    }
   }
 
   /**
@@ -211,7 +201,7 @@ export class TabarimService {
   }
 
   /**
-   * Get mock tabarim data
+   * Get mock tabarim data as fallback
    */
   private static getMockTabarimData(): Tabar[] {
     return [
@@ -221,160 +211,49 @@ export class TabarimService {
         name: 'פרויקט תשתית דרכים מרכזיות',
         description: 'שיפור ופיתוח תשתית דרכים במרכז העיר',
         status: 'פעיל',
-        budget: 15000000,
         total_authorized: 15000000,
         utilized: 12500000,
         utilization_percentage: 83.3,
-        ministry: 'משרד התחבורה',
-        department: 'תחבורה ותשתיות',
         year: 2024,
+        ministry: 'משרד התחבורה',
+        department: 'תשתיות',
         open_date: '2024-01-15',
-        close_date: null,
-        permission_number: 'T-001-2024',
-        municipal_participation: 3000000
+        close_date: '2024-12-31',
+        permission_number: 'PERM-2024-001',
+        municipal_participation: 2500000
       },
       {
         id: '2',
         tabar_number: 'TB-2024-002',
         name: 'פרויקט חינוך דיגיטלי',
-        description: 'הטמעת טכנולוגיות דיגיטליות בבתי ספר',
+        description: 'הטמעת טכנולוגיה חדשה בבתי הספר',
         status: 'בתכנון',
-        budget: 8500000,
         total_authorized: 8500000,
         utilized: 2100000,
         utilization_percentage: 24.7,
+        year: 2024,
         ministry: 'משרד החינוך',
-        department: 'חינוך ותרבות',
-        year: 2024,
-        open_date: '2024-02-01',
-        close_date: null,
-        permission_number: 'E-002-2024',
-        municipal_participation: 1700000
-      },
-      {
-        id: '3',
-        tabar_number: 'TB-2024-003',
-        name: 'פרויקט פארקים עירוניים',
-        description: 'הקמת ושיפוץ פארקים ומרחבים ציבוריים',
-        status: 'פעיל',
-        budget: 6200000,
-        total_authorized: 6200000,
-        utilized: 4800000,
-        utilization_percentage: 77.4,
-        ministry: 'משרד הפנים',
-        department: 'פיתוח ותכנון עירוני',
-        year: 2024,
-        open_date: '2024-01-20',
-        close_date: null,
-        permission_number: 'P-003-2024',
-        municipal_participation: 1240000
-      },
-      {
-        id: '4',
-        tabar_number: 'TB-2024-004',
-        name: 'פרויקט תחבורה ציבורית',
-        description: 'שיפור רשת התחבורה הציבורית בעיר',
-        status: 'בהמתנה',
-        budget: 12000000,
-        total_authorized: 12000000,
-        utilized: 800000,
-        utilization_percentage: 6.7,
-        ministry: 'משרד התחבורה',
-        department: 'תחבורה ציבורית',
-        year: 2024,
+        department: 'חינוך וטכנולוגיה',
         open_date: '2024-03-01',
-        close_date: null,
-        permission_number: 'T-004-2024',
-        municipal_participation: 2400000
-      },
-      {
-        id: '5',
-        tabar_number: 'TB-2024-005',
-        name: 'פרויקט מרכז קהילתי',
-        description: 'הקמת מרכז קהילתי חדש באזור הדרום',
-        status: 'הושלם',
-        budget: 4500000,
-        total_authorized: 4500000,
-        utilized: 4500000,
-        utilization_percentage: 100.0,
-        ministry: 'משרד הרווחה',
-        department: 'שירותים קהילתיים',
-        year: 2023,
-        open_date: '2023-06-01',
-        close_date: '2024-05-15',
-        permission_number: 'W-005-2023',
-        municipal_participation: 900000
-      },
-      {
-        id: '6',
-        tabar_number: 'TB-2024-006',
-        name: 'פרויקט אנרגיה מתחדשת',
-        description: 'התקנת פאנלים סולאריים במבני הציבור',
-        status: 'פעיל',
-        budget: 9800000,
-        total_authorized: 9800000,
-        utilized: 5880000,
-        utilization_percentage: 60.0,
-        ministry: 'משרד האנרגיה',
-        department: 'אנרגיה מתחדשת',
-        year: 2024,
-        open_date: '2024-01-10',
-        close_date: null,
-        permission_number: 'E-006-2024',
-        municipal_participation: 1960000
-      },
-      {
-        id: '7',
-        tabar_number: 'TB-2024-007',
-        name: 'פרויקט דיור ציבורי',
-        description: 'הקמת יחידות דיור בהישג יד',
-        status: 'בתכנון',
-        budget: 25000000,
-        total_authorized: 25000000,
-        utilized: 1250000,
-        utilization_percentage: 5.0,
-        ministry: 'משרד הבינוי והשיכון',
-        department: 'דיור ציבורי',
-        year: 2024,
-        open_date: '2024-04-01',
-        close_date: null,
-        permission_number: 'H-007-2024',
-        municipal_participation: 5000000
-      },
-      {
-        id: '8',
-        tabar_number: 'TB-2024-008',
-        name: 'פרויקט ביוב ומים',
-        description: 'שיפור מערכת הביוב והמים העירונית',
-        status: 'פעיל',
-        budget: 18000000,
-        total_authorized: 18000000,
-        utilized: 10800000,
-        utilization_percentage: 60.0,
-        ministry: 'רשות המים',
-        department: 'תשתיות מים וביוב',
-        year: 2024,
-        open_date: '2024-02-15',
-        close_date: null,
-        permission_number: 'W-008-2024',
-        municipal_participation: 3600000
+        close_date: '2025-02-28',
+        permission_number: 'PERM-2024-002',
+        municipal_participation: 1700000
       },
       {
         id: '101',
         tabar_number: 101,
         name: 'פרויקט מיוחד 101',
-        description: 'פרויקט מיוחד לבדיקות מערכת',
+        description: 'פרויקט מיוחד לצורך בדיקות',
         status: 'פעיל',
-        budget: 5000000,
         total_authorized: 5000000,
         utilized: 3500000,
-        utilization_percentage: 70.0,
-        ministry: 'משרד הפנים',
-        department: 'פיתוח מערכות',
+        utilization_percentage: 70,
         year: 2024,
+        ministry: 'משרד הפנים',
+        department: 'פרויקטים מיוחדים',
         open_date: '2024-01-01',
-        close_date: null,
-        permission_number: 'SYS-101-2024',
+        close_date: '2024-12-31',
+        permission_number: 'PERM-2024-101',
         municipal_participation: 1000000
       }
     ];

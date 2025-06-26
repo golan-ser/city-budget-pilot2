@@ -122,7 +122,7 @@ const TabarDocuments: React.FC<TabarDocumentsProps> = ({
     };
 
     if (tabarId && isOpen) {
-      fetchDocuments();
+    fetchDocuments();
     }
   }, [tabarId, isOpen]);
 

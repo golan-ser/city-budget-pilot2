@@ -85,7 +85,11 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
 export const api = {
   get: async (url: string, options: RequestInit = {}) => {
     try {
-      return await apiRequest(url, { ...options, method: 'GET' });
+      const response = await apiRequest(url, { ...options, method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error(`GET ${url} failed:`, error);
       throw error;
@@ -94,11 +98,15 @@ export const api = {
   
   post: async (url: string, body?: any, options: RequestInit = {}) => {
     try {
-      return await apiRequest(url, {
+      const response = await apiRequest(url, {
         ...options,
         method: 'POST',
         body: body ? JSON.stringify(body) : undefined
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error(`POST ${url} failed:`, error);
       throw error;
@@ -107,11 +115,15 @@ export const api = {
   
   put: async (url: string, body?: any, options: RequestInit = {}) => {
     try {
-      return await apiRequest(url, {
+      const response = await apiRequest(url, {
         ...options,
         method: 'PUT',
         body: body ? JSON.stringify(body) : undefined
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error(`PUT ${url} failed:`, error);
       throw error;
@@ -120,7 +132,16 @@ export const api = {
   
   delete: async (url: string, options: RequestInit = {}) => {
     try {
-      return await apiRequest(url, { ...options, method: 'DELETE' });
+      const response = await apiRequest(url, { ...options, method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      // DELETE might not return JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      return null;
     } catch (error) {
       console.error(`DELETE ${url} failed:`, error);
       throw error;

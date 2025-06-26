@@ -247,7 +247,7 @@ export default function TabarBudgetReport() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
+    setLoading(true);
         const budgetData = await ReportsService.fetchTabarBudget();
         setData(budgetData);
       } catch (error) {

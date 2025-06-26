@@ -1,10 +1,5 @@
-// API Configuration - Force production URL for Vercel deployment
-export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 
-  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
-    ? 'https://impartial-luck-production.up.railway.app'
-    : import.meta.env.MODE === 'production' 
-      ? 'https://impartial-luck-production.up.railway.app'
-      : 'http://localhost:3000');
+// API Configuration - Use Railway deployment URL
+export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'https://impartial-luck-production.up.railway.app';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -20,13 +15,21 @@ export const API_ENDPOINTS = {
   PROJECTS: '/api/projects',
   
   // Tabarim
-  TABARIM: '/api/tabarim',
+  TABARIM: {
+    LIST: '/api/tabarim',
+    DETAILS: '/api/tabarim',
+    CREATE: '/api/tabarim',
+    UPDATE: '/api/tabarim',
+    DELETE: '/api/tabarim',
+  },
   
   // Dashboard
-  DASHBOARD: '/api/dashboard',
-  DASHBOARD_ENHANCED: '/api/dashboard/enhanced',
-  DASHBOARD_ANALYTICS: '/api/dashboard/analytics',
-  DASHBOARD_EXPORT_PDF: '/api/dashboard/export/pdf',
+  DASHBOARD: {
+    MAIN: '/api/dashboard',
+    COMBINED: '/api/dashboard/combined',
+    ANALYTICS: '/api/dashboard/analytics',
+    EXPORT_PDF: '/api/dashboard/export/pdf',
+  },
   
   // OpenAI Status
   OPENAI_STATUS: '/api/openai-status',

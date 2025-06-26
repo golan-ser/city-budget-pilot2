@@ -31,167 +31,142 @@ export interface ProjectMilestone {
 
 export class ProjectsService {
   /**
-   * Fetch all projects - MOCK VERSION FOR DEMO
+   * Fetch all projects
    */
   static async fetchAll(): Promise<Project[]> {
-    console.log('🎭 Using mock projects data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return this.getMockProjectsData();
+    try {
+      const response = await api.get(API_ENDPOINTS.PROJECTS);
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.fetchAll error:', error);
+      // Fallback to mock data if API fails
+      return this.getMockProjectsData();
+    }
   }
 
   /**
-   * Fetch project by ID - MOCK VERSION FOR DEMO
+   * Fetch project by ID
    */
   static async fetchById(id: string): Promise<Project> {
-    console.log('🎭 Using mock project data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const mockData = this.getMockProjectsData();
-    const project = mockData.find(p => p.id === id);
-    
-    if (!project) {
-      throw new Error(`Project with id ${id} not found`);
+    try {
+      const response = await api.get(`${API_ENDPOINTS.PROJECTS}/${id}`);
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.fetchById error:', error);
+      // Fallback to mock data
+      const mockData = this.getMockProjectsData();
+      const project = mockData.find(p => p.id === id);
+      
+      if (!project) {
+        throw new Error(`Project with id ${id} not found`);
+      }
+      
+      return project;
     }
-    
-    return project;
   }
 
   /**
-   * Fetch project documents - MOCK VERSION FOR DEMO
+   * Fetch project documents
    */
   static async fetchDocuments(projectId: string): Promise<ProjectDocument[]> {
-    console.log('🎭 Using mock project documents - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return [
-      {
-        id: '1',
-        project_id: projectId,
-        filename: 'תיעוד_פרoyeket.pdf',
-        upload_date: '2024-05-15T10:30:00Z',
-        file_size: 1024000,
-        file_type: 'application/pdf'
-      },
-      {
-        id: '2',
-        project_id: projectId,
-        filename: 'תקציב_מפורט.xlsx',
-        upload_date: '2024-05-18T14:15:00Z',
-        file_size: 512000,
-        file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      }
-    ];
+    try {
+      const response = await api.get(`${API_ENDPOINTS.DOCUMENTS}/${projectId}`);
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.fetchDocuments error:', error);
+      // Fallback to mock data
+      return [
+        {
+          id: '1',
+          project_id: projectId,
+          filename: 'תיעוד_פרoyeket.pdf',
+          upload_date: '2024-05-15T10:30:00Z',
+          file_size: 1024000,
+          file_type: 'application/pdf'
+        }
+      ];
+    }
   }
 
   /**
-   * Upload document to project - MOCK VERSION FOR DEMO
+   * Upload document to project
    */
   static async uploadDocument(projectId: string, file: File): Promise<void> {
-    console.log('🎭 Mock project document upload - API disabled');
-    
-    // Simulate API delay for upload
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log(`Mock: Document ${file.name} uploaded to project ${projectId}`);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('project_id', projectId);
+      
+      await api.post(`${API_ENDPOINTS.DOCUMENTS}/upload`, formData);
+    } catch (error) {
+      console.error('ProjectsService.uploadDocument error:', error);
+      throw new Error('Failed to upload document');
+    }
   }
 
   /**
-   * Fetch project milestones - MOCK VERSION FOR DEMO
+   * Fetch project milestones
    */
   static async fetchMilestones(projectId: string): Promise<ProjectMilestone[]> {
-    console.log('🎭 Using mock project milestones - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 250));
-    
-    return [
-      {
-        id: '1',
-        project_id: projectId,
-        title: 'תכנון ראשוני',
-        description: 'הכנת תכנית עבודה מפורטת',
-        due_date: '2024-02-01',
-        status: 'הושלם',
-        completed_date: '2024-01-28'
-      },
-      {
-        id: '2',
-        project_id: projectId,
-        title: 'קבלת אישורים',
-        description: 'השגת כל האישורים הדרושים מהרשויות',
-        due_date: '2024-03-15',
-        status: 'בתהליך'
-      },
-      {
-        id: '3',
-        project_id: projectId,
-        title: 'התחלת ביצוע',
-        description: 'תחילת העבודות בשטח',
-        due_date: '2024-06-01',
-        status: 'ממתין'
-      }
-    ];
+    try {
+      const response = await api.get(`${API_ENDPOINTS.MILESTONES}/${projectId}`);
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.fetchMilestones error:', error);
+      // Fallback to mock data
+      return [
+        {
+          id: '1',
+          project_id: projectId,
+          title: 'תכנון ראשוני',
+          description: 'הכנת תכנית עבודה מפורטת',
+          due_date: '2024-02-01',
+          status: 'הושלם',
+          completed_date: '2024-01-28'
+        }
+      ];
+    }
   }
 
   /**
-   * Add milestone to project - MOCK VERSION FOR DEMO
+   * Add milestone to project
    */
   static async addMilestone(projectId: string, milestone: Partial<ProjectMilestone>): Promise<ProjectMilestone> {
-    console.log('🎭 Mock milestone creation - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    const newMilestone: ProjectMilestone = {
-      id: `mock-${Date.now()}`,
-      project_id: projectId,
-      title: milestone.title || 'אבן דרך חדשה',
-      description: milestone.description,
-      due_date: milestone.due_date || new Date().toISOString().split('T')[0],
-      status: milestone.status || 'ממתין',
-      completed_date: milestone.completed_date
-    };
-    
-    return newMilestone;
+    try {
+      const response = await api.post(`${API_ENDPOINTS.MILESTONES}`, {
+        ...milestone,
+        project_id: projectId
+      });
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.addMilestone error:', error);
+      throw new Error('Failed to add milestone');
+    }
   }
 
   /**
-   * Update milestone - MOCK VERSION FOR DEMO
+   * Update milestone
    */
   static async updateMilestone(projectId: string, milestoneId: string, milestone: Partial<ProjectMilestone>): Promise<ProjectMilestone> {
-    console.log('🎭 Mock milestone update - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return {
-      id: milestoneId,
-      project_id: projectId,
-      title: milestone.title || 'אבן דרך מעודכנת',
-      description: milestone.description,
-      due_date: milestone.due_date || new Date().toISOString().split('T')[0],
-      status: milestone.status || 'ממתין',
-      completed_date: milestone.completed_date
-    };
+    try {
+      const response = await api.put(`${API_ENDPOINTS.MILESTONES}/${milestoneId}`, milestone);
+      return response;
+    } catch (error) {
+      console.error('ProjectsService.updateMilestone error:', error);
+      throw new Error('Failed to update milestone');
+    }
   }
 
   /**
-   * Delete milestone - MOCK VERSION FOR DEMO
+   * Delete milestone
    */
   static async deleteMilestone(projectId: string, milestoneId: string): Promise<void> {
-    console.log('🎭 Mock milestone deletion - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    console.log(`Mock: Milestone ${milestoneId} deleted from project ${projectId}`);
+    try {
+      await api.delete(`${API_ENDPOINTS.MILESTONES}/${milestoneId}`);
+    } catch (error) {
+      console.error('ProjectsService.deleteMilestone error:', error);
+      throw new Error('Failed to delete milestone');
+    }
   }
 
   /**
