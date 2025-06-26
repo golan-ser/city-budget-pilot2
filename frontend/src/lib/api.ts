@@ -40,8 +40,20 @@ const handleCorsError = (error: any, url: string) => {
 export const apiRequest = async (url: string, options: RequestInit = {}) => {
   const { headers = {}, ...otherOptions } = options;
   
+  // Check for undefined or invalid URLs
+  if (!url || url === 'undefined' || url.includes('undefined')) {
+    console.error('❌ API Request Error: Invalid URL detected', { url, API_BASE_URL });
+    throw new Error(`Invalid API URL: "${url}". Check API_ENDPOINTS configuration.`);
+  }
+  
   // Handle relative URLs
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  
+  // Additional check for the full URL
+  if (!fullUrl || fullUrl.includes('undefined')) {
+    console.error('❌ API Request Error: Invalid full URL', { fullUrl, API_BASE_URL, originalUrl: url });
+    throw new Error(`Invalid full API URL: "${fullUrl}". Check API_BASE_URL configuration.`);
+  }
   
   try {
     const response = await fetch(fullUrl, {

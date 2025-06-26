@@ -46,6 +46,7 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
   const [permissions, setPermissions] = useState<PermissionsData>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDemoUser, setIsDemoUser] = useState(false);
 
   // Safe validation function
   const validatePermission = (perm: any): Permission => {
@@ -96,56 +97,60 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Check for demo user override
+  useEffect(() => {
+    const checkDemoUser = () => {
+      try {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const parsed = JSON.parse(userData);
+          const isDemo = parsed.name === 'Demo User' || parsed.email === 'demo@example.com' || parsed.id === 3;
+          setIsDemoUser(isDemo);
+          
+          if (isDemo) {
+            console.log('🎭 Demo user detected - Using full permissions');
+            setPermissions(DEFAULT_PERMISSIONS);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Error parsing userData:', error);
+      }
+      
+      // For now, always use demo permissions to avoid API issues
+      console.log('🔧 API disabled - Using demo permissions for all users');
+      setIsDemoUser(true);
+      setPermissions(DEFAULT_PERMISSIONS);
+      setLoading(false);
+    };
+
+    checkDemoUser();
+  }, []);
+
+  // Disabled API calls for now - using only demo permissions
+  /*
+  useEffect(() => {
+    if (!isDemoUser) {
+      fetchUserPermissions();
+    }
+  }, [isDemoUser]);
+
   const fetchUserPermissions = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      console.log('🔍 Fetching user permissions...');
-      
-             const data = await AdminService.fetchUserPermissions(1, 1, '3');
-      
-      if (data && typeof data === 'object') {
-        console.log('✅ Raw permissions data:', data);
-        
-        let apiPermissions: any = {};
-        
-        // Handle different API response structures
-        if (data.permissions && typeof data.permissions === 'object') {
-          apiPermissions = data.permissions;
-        } else if (data.data?.permissions && typeof data.data.permissions === 'object') {
-          apiPermissions = data.data.permissions;
-        } else if (data.page_id || data.can_view !== undefined) {
-          // Single permission object
-          apiPermissions = { [data.page_id || 'dashboard']: data };
-        } else {
-          // Assume the data itself is the permissions object
-          apiPermissions = data;
-        }
-        
-        console.log('🔧 Processed permissions:', apiPermissions);
-        
-        // Validate and set permissions
-        const validatedPermissions = validatePermissions(apiPermissions);
-        setPermissions(validatedPermissions);
-        
-        console.log('✅ Final validated permissions:', validatedPermissions);
-      } else {
-        throw new Error('Invalid permissions data structure');
-      }
-      
-    } catch (error: any) {
-      console.warn('📋 API not available, using default permissions:', error.message);
-      setError(error.message);
+      // Example call - in real app this would come from user context
+      const data = await AdminService.fetchUserPermissions(1, 1, '3');
+      setPermissions(data.permissions || DEFAULT_PERMISSIONS);
+    } catch (error) {
+      console.error('Failed to fetch user permissions:', error);
+      // Fallback to default permissions on error
       setPermissions(DEFAULT_PERMISSIONS);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchUserPermissions();
-  }, []);
+  */
 
   // Safe permission check function
   const hasPermission = (pageId: string, action: keyof Permission): boolean => {
@@ -215,7 +220,7 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
       error,
       hasPermission,
       canAccessPage,
-      refetch: fetchUserPermissions
+      refetch: () => Promise.resolve()
     }}>
       {children}
     </PermissionsContext.Provider>
