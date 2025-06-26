@@ -1,5 +1,5 @@
 import fs from 'fs';
-import pdf from 'pdf-parse';
+// import pdf from 'pdf-parse'; // מוסר import סטטי
 // import { convert } from 'pdf-poppler';
 import Tesseract from 'tesseract.js';
 import path from 'path';
@@ -11,6 +11,8 @@ export async function extractTextFromPdf(filePath) {
 
   // ננסה לחלץ טקסט "חי" מה-PDF
   try {
+    // טעינה דינמית של pdf-parse
+    const { default: pdf } = await import('pdf-parse');
     const pdfData = await pdf(dataBuffer);
     if (pdfData.text && pdfData.text.length > 20) return pdfData.text;
   } catch (err) {
