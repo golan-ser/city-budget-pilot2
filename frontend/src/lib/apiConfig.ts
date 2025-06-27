@@ -53,6 +53,7 @@ export const API_ENDPOINTS = {
     PERMISSIONS: '/api/admin/permissions',
     USERS: '/api/admin/users',
     STATISTICS: '/api/admin/statistics',
+    RECENT_ACTIVITY: '/api/admin/recent-activity',
     TENANTS: '/api/admin/tenants',
     SYSTEMS: '/api/admin/systems',
     ROLES: '/api/admin/roles',

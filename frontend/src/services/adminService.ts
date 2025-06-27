@@ -71,7 +71,7 @@ export class AdminService {
    */
   static async fetchRecentActivity(limit: number = 5): Promise<RecentActivity[]> {
     try {
-      const response = await api.get(`${API_ENDPOINTS.ADMIN.STATISTICS}/activity?limit=${limit}`);
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.RECENT_ACTIVITY}?limit=${limit}`);
       return response;
     } catch (error) {
       console.error('AdminService.fetchRecentActivity error:', error);
@@ -179,12 +179,7 @@ export class AdminService {
   static async createSystem(systemData: any): Promise<any> {
     try {
       const response = await api.post(API_ENDPOINTS.ADMIN.SYSTEMS, systemData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to create system`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.createSystem error:', error);
       throw new Error(`Failed to create system: ${error.message}`);
@@ -197,12 +192,7 @@ export class AdminService {
   static async updateSystem(systemId: string | number, systemData: any): Promise<any> {
     try {
       const response = await api.put(`${API_ENDPOINTS.ADMIN.SYSTEMS}/${systemId}`, systemData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to update system`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.updateSystem error:', error);
       throw new Error(`Failed to update system: ${error.message}`);
@@ -214,11 +204,7 @@ export class AdminService {
    */
   static async deleteSystem(systemId: string | number): Promise<void> {
     try {
-      const response = await api.delete(`${API_ENDPOINTS.ADMIN.SYSTEMS}/${systemId}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to delete system`);
-      }
+      await api.delete(`${API_ENDPOINTS.ADMIN.SYSTEMS}/${systemId}`);
     } catch (error: any) {
       console.error('AdminService.deleteSystem error:', error);
       throw new Error(`Failed to delete system: ${error.message}`);
@@ -231,12 +217,7 @@ export class AdminService {
   static async fetchRoles(): Promise<any[]> {
     try {
       const response = await api.get(API_ENDPOINTS.ADMIN.ROLES);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch roles`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.fetchRoles error:', error);
       throw new Error(`Failed to fetch roles: ${error.message}`);
@@ -249,12 +230,7 @@ export class AdminService {
   static async createRole(roleData: any): Promise<any> {
     try {
       const response = await api.post(API_ENDPOINTS.ADMIN.ROLES, roleData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to create role`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.createRole error:', error);
       throw new Error(`Failed to create role: ${error.message}`);
@@ -267,12 +243,7 @@ export class AdminService {
   static async updateRole(roleId: string, roleData: any): Promise<any> {
     try {
       const response = await api.put(`${API_ENDPOINTS.ADMIN.ROLES}/${roleId}`, roleData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to update role`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.updateRole error:', error);
       throw new Error(`Failed to update role: ${error.message}`);
