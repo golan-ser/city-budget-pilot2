@@ -258,14 +258,14 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
             <div className="text-lg font-semibold text-purple-600">
-              {(data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0).toLocaleString('he-IL')}
+              ₪{((data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0) || 0).toLocaleString('he-IL')}
             </div>
             <div className="text-xs text-gray-600">סה"כ 12 חודשים</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
             <div className="text-lg font-semibold text-green-600">
-              {((data.monthlyExecution || []).length > 0 
-                ? Math.round((data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0) / (data.monthlyExecution || []).length) 
+              ₪{((data.monthlyExecution || []).length > 0 
+                ? Math.round(((data.monthlyExecution || []).reduce((sum, item) => sum + (item?.execution || 0), 0) || 0) / (data.monthlyExecution || []).length) 
                 : 0
               ).toLocaleString('he-IL')}
             </div>

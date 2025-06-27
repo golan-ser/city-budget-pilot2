@@ -169,14 +169,14 @@ export const EnhancedDashboard: React.FC = () => {
     budgetUtilization: (data.trends?.budgetUtilization || []).map(item => ({
       month: item.month,
       monthName: item.month,
-      value: item.amount,
-      formatted: `₪${item.amount.toLocaleString('he-IL')}`
+      value: item.amount || 0,
+      formatted: `₪${(item.amount || 0).toLocaleString('he-IL')}`
     })),
     monthlyExecution: (data.trends?.monthlyExecution || []).map(item => ({
       month: item.month,
       monthName: item.month,
-      value: item.amount,
-      formatted: `₪${item.amount.toLocaleString('he-IL')}`
+      value: item.amount || 0,
+      formatted: `₪${(item.amount || 0).toLocaleString('he-IL')}`
     })),
     newProjects: [],
     executionReports: []
@@ -184,11 +184,11 @@ export const EnhancedDashboard: React.FC = () => {
 
   const budgetByMinistryData = (data.budgetByMinistry || []).map(item => ({
     ministry: item.ministry,
-    total_authorized: item.amount,
-    total_executed: item.amount * (item.percentage / 100),
-    formatted_authorized: `₪${item.amount.toLocaleString('he-IL')}`,
-    formatted_executed: `₪${(item.amount * (item.percentage / 100)).toLocaleString('he-IL')}`,
-    utilization_percentage: item.percentage
+    total_authorized: item.amount || 0,
+    total_executed: (item.amount || 0) * ((item.percentage || 0) / 100),
+    formatted_authorized: `₪${(item.amount || 0).toLocaleString('he-IL')}`,
+    formatted_executed: `₪${((item.amount || 0) * ((item.percentage || 0) / 100)).toLocaleString('he-IL')}`,
+    utilization_percentage: item.percentage || 0
   }));
 
   return (

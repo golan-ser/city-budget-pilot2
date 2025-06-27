@@ -325,8 +325,8 @@ export const ProjectStatusChart: React.FC<ProjectStatusChartProps> = ({
             <div className="flex justify-between">
               <span className="text-gray-600">תקציב פעיל:</span>
               <span className="font-medium">
-                ₪{((chartData.find(d => d.status === 'נפתח')?.total_budget || 0) + 
-                   (chartData.find(d => d.status === 'אושר')?.total_budget || 0)).toLocaleString('he-IL')}
+                ₪{(((chartData.find(d => d.status === 'נפתח')?.total_budget || 0) + 
+                   (chartData.find(d => d.status === 'אושר')?.total_budget || 0)) || 0).toLocaleString('he-IL')}
               </span>
             </div>
           </div>
