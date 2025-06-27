@@ -45,7 +45,7 @@ export const EnhancedDashboard: React.FC = () => {
       }
 
       // Use the new dashboard service
-      const combinedData = await DashboardService.fetchCombined();
+      const combinedData = await DashboardService.fetchCombinedData();
       setData(combinedData);
       
       if (showRefreshIndicator) {
