@@ -123,11 +123,11 @@ const AuditLog: React.FC = () => {
     }
   };
 
-  const filteredLogs = logs.filter(log =>
-    log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.resource_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.details.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLogs = (logs || []).filter(log =>
+    log?.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log?.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log?.resource_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log?.details?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading && logs.length === 0) {

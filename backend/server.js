@@ -58,7 +58,7 @@ app.use(cors({
         'https://city-budget-pilot2-207f5wt8i-fintecity.vercel.app',
         'https://city-budget-frontend-v2.vercel.app',
         'https://city-budget-frontend-v2-git-main-fintecity.vercel.app',
-        'https://city-budget-frontend-v2-git-main-fintecity.vercel.app'
+        'https://city-budget-frontend-v2-bjauaoxvv-fintecity.vercel.app'
       ] 
     : ['http://localhost:8080', 'http://localhost:3000', 'http://localhost:5173'],
   credentials: true,
@@ -69,6 +69,15 @@ app.use(cors({
 // הגדרת UTF-8 encoding מפורשת
 app.use(express.json({ charset: 'utf-8', limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, charset: 'utf-8', limit: '10mb' }));
+
+// 🔐 SECURITY: Handle preflight OPTIONS requests
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-demo-token');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // 🔐 SECURITY: Safe logging middleware (no sensitive data)
 app.use((req, res, next) => {
