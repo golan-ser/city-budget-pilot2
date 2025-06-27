@@ -6,6 +6,9 @@ export interface ReportFilters {
   dateTo?: string;
   ministryId?: string;
   status?: string;
+  year?: string;
+  ministry?: string;
+  search?: string;
   // Add more filters as needed
 }
 
@@ -23,105 +26,250 @@ export interface BudgetItem {
 }
 
 export interface FullTabarReport {
-  // Define structure based on your API response
   data: any[];
-  totals: any;
+  totals: {
+    totalBudget: number;
+    totalSpent: number;
+    utilizationRate: number;
+    totalProjects: number;
+  };
 }
 
 export interface TabarBudgetReport {
-  // Define structure based on your API response
   budgetData: any[];
-  analysis: any;
+  analysis: {
+    totalApproved: number;
+    totalExecuted: number;
+    totalMunicipal: number;
+    overallUtilization: number;
+    projectCount: number;
+    ministryBreakdown: any[];
+  };
 }
 
 export class ReportsService {
   /**
-   * Fetch budget items report - MOCK VERSION FOR DEMO
+   * Get authentication token
    */
-  static async fetchBudgetItems(filters?: ReportFilters): Promise<any[]> {
-    console.log('🎭 Using mock budget items report - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    return this.getMockBudgetItems(filters);
+  private static getAuthToken(): string {
+    return localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
   }
 
   /**
-   * Export budget items report as Excel - MOCK VERSION FOR DEMO
+   * Get auth headers
    */
-  static async exportBudgetItemsExcel(filters?: ReportFilters): Promise<Blob> {
-    console.log('🎭 Mock Excel export - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockData = this.getMockBudgetItems(filters);
-    const csvContent = this.convertToCSV(mockData);
-    
-    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-  }
-
-  /**
-   * Fetch full tabar report - MOCK VERSION FOR DEMO
-   */
-  static async fetchFullTabar(filters?: ReportFilters): Promise<FullTabarReport> {
-    console.log('🎭 Using mock full tabar report - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+  private static getAuthHeaders() {
     return {
-      data: this.getMockTabarData(),
-      totals: {
-        totalBudget: 125000000,
-        totalExecuted: 89000000,
-        utilizationRate: 71.2,
-        totalProjects: 18
-      }
+      'Authorization': `Bearer ${this.getAuthToken()}`,
+      'x-demo-token': this.getAuthToken(),
+      'Content-Type': 'application/json'
     };
   }
 
   /**
-   * Export full tabar report as Excel - MOCK VERSION FOR DEMO
+   * Fetch budget items report - REAL API VERSION
+   */
+  static async fetchBudgetItems(filters?: ReportFilters): Promise<BudgetItem[]> {
+    console.log('📊 Fetching real budget items from API...');
+    
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters?.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
+      if (filters?.year && filters.year !== 'all') params.append('year', filters.year);
+      if (filters?.search) params.append('search', filters.search);
+      
+      const url = `${API_ENDPOINTS.REPORTS.BUDGET_ITEMS}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Budget items fetched successfully:', data.length, 'items');
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching budget items:', error);
+      // Fallback to mock data if API fails
+      return this.getMockBudgetItems(filters);
+    }
+  }
+
+  /**
+   * Export budget items report as Excel - REAL API VERSION
+   */
+  static async exportBudgetItemsExcel(filters?: ReportFilters): Promise<Blob> {
+    console.log('📊 Exporting budget items Excel from API...');
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.REPORTS.BUDGET_ITEMS_EXPORT_PDF, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ filters })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ Budget items Excel exported successfully');
+      return blob;
+    } catch (error) {
+      console.error('❌ Error exporting budget items Excel:', error);
+      // Fallback to mock data
+      const mockData = this.getMockBudgetItems(filters);
+      const csvContent = this.convertToCSV(mockData);
+      return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    }
+  }
+
+  /**
+   * Fetch full tabar report - REAL API VERSION
+   */
+  static async fetchFullTabar(filters?: ReportFilters): Promise<FullTabarReport> {
+    console.log('📊 Fetching real full tabar report from API...');
+    
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters?.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
+      if (filters?.year && filters.year !== 'all') params.append('year', filters.year);
+      if (filters?.search) params.append('search', filters.search);
+      
+      const url = `${API_ENDPOINTS.REPORTS.FULL_TABAR}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Full tabar report fetched successfully:', data.data?.length || 0, 'records');
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching full tabar report:', error);
+      // Fallback to mock data if API fails
+      return {
+        data: this.getMockTabarData(),
+        totals: {
+          totalBudget: 125000000,
+          totalSpent: 89000000,
+          utilizationRate: 71.2,
+          totalProjects: 18
+        }
+      };
+    }
+  }
+
+  /**
+   * Export full tabar report as Excel - REAL API VERSION
    */
   static async exportFullTabarExcel(filters?: ReportFilters): Promise<Blob> {
-    console.log('🎭 Mock full tabar Excel export - API disabled');
+    console.log('📊 Exporting full tabar Excel from API...');
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 900));
-    
-    const mockData = this.getMockTabarData();
-    const csvContent = this.convertToCSV(mockData);
-    
-    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters?.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
+      if (filters?.year && filters.year !== 'all') params.append('year', filters.year);
+      
+      const url = `${API_ENDPOINTS.REPORTS.FULL_TABAR_EXPORT_PDF}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ Full tabar Excel exported successfully');
+      return blob;
+    } catch (error) {
+      console.error('❌ Error exporting full tabar Excel:', error);
+      // Fallback to mock data
+      const mockData = this.getMockTabarData();
+      const csvContent = this.convertToCSV(mockData);
+      return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    }
   }
 
   /**
-   * Fetch tabar budget report - MOCK VERSION FOR DEMO
+   * Fetch tabar budget report - REAL API VERSION
    */
-  static async fetchTabarBudget(filters?: ReportFilters): Promise<any[]> {
-    console.log('🎭 Using mock tabar budget report - API disabled');
+  static async fetchTabarBudget(filters?: ReportFilters): Promise<TabarBudgetReport> {
+    console.log('📊 Fetching real tabar budget report from API...');
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 350));
-    
-    return this.getMockBudgetReport();
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters?.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
+      if (filters?.year && filters.year !== 'all') params.append('year', filters.year);
+      
+      const url = `${API_ENDPOINTS.REPORTS.TABAR_BUDGET}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Tabar budget report fetched successfully:', data.budgetData?.length || 0, 'records');
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching tabar budget report:', error);
+      // Fallback to mock data if API fails
+      return {
+        budgetData: this.getMockBudgetReport(),
+        analysis: {
+          totalApproved: 50000000,
+          totalExecuted: 35000000,
+          totalMunicipal: 15000000,
+          overallUtilization: 70,
+          projectCount: 12,
+          ministryBreakdown: []
+        }
+      };
+    }
   }
 
   /**
-   * Export tabar budget report as Excel - MOCK VERSION FOR DEMO
+   * Export tabar budget report as Excel - REAL API VERSION
    */
   static async exportTabarBudgetExcel(data?: any): Promise<Blob> {
-    console.log('🎭 Mock tabar budget Excel export - API disabled');
+    console.log('📊 Exporting tabar budget Excel from API...');
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const exportData = data || this.getMockBudgetReport();
-    const csvContent = this.convertToCSV(exportData);
-    
-    return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    try {
+      const response = await fetch(API_ENDPOINTS.REPORTS.TABAR_BUDGET_EXPORT_PDF, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ Tabar budget Excel exported successfully');
+      return blob;
+    } catch (error) {
+      console.error('❌ Error exporting tabar budget Excel:', error);
+      // Fallback to mock data
+      const exportData = data || this.getMockBudgetReport();
+      const csvContent = this.convertToCSV(exportData);
+      return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    }
   }
 
   /**
@@ -139,7 +287,7 @@ export class ReportsService {
   }
 
   /**
-   * Get mock budget items data
+   * Get mock budget items data - FALLBACK ONLY
    */
   private static getMockBudgetItems(filters?: ReportFilters): BudgetItem[] {
     const budgetItems: BudgetItem[] = [
@@ -194,7 +342,7 @@ export class ReportsService {
   }
 
   /**
-   * Get mock tabar data
+   * Get mock tabar data - FALLBACK ONLY
    */
   private static getMockTabarData(): any[] {
     return [
@@ -229,7 +377,7 @@ export class ReportsService {
   }
 
   /**
-   * Get mock budget report data
+   * Get mock budget report - FALLBACK ONLY
    */
   private static getMockBudgetReport(): any[] {
     return [

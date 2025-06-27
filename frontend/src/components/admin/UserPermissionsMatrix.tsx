@@ -113,8 +113,7 @@ const UserPermissionsMatrix: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const response = await api.get(API_ENDPOINTS.ADMIN.TENANTS);
-      const data = await response.json();
+      const data = await api.get(API_ENDPOINTS.ADMIN.TENANTS);
       const filteredTenants = ErrorHandler.safeFilter<Tenant>(data, (t: Tenant) => t.status === 'active');
       setTenants(filteredTenants);
     } catch (err) {
@@ -125,8 +124,7 @@ const UserPermissionsMatrix: React.FC = () => {
 
   const fetchSystems = async () => {
     try {
-      const response = await api.get(API_ENDPOINTS.ADMIN.SYSTEMS);
-      const data = await response.json();
+      const data = await api.get(API_ENDPOINTS.ADMIN.SYSTEMS);
       const filteredSystems = ErrorHandler.safeFilter<System>(data, (s: System) => s.is_active);
       setSystems(filteredSystems);
     } catch (err) {
@@ -139,8 +137,7 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant) return;
 
     try {
-      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?tenantId=${selectedTenant}`);
-      const result = await response.json();
+      const result = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?tenantId=${selectedTenant}`);
       console.log('Users API response:', result); // Debug log
       
       // Handle both formats: direct data or wrapped in data object
@@ -160,12 +157,10 @@ const UserPermissionsMatrix: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await api.get(
+      const data = await api.get(
         `${API_ENDPOINTS.ADMIN.PERMISSIONS}/user?tenantId=${selectedTenant}&systemId=${selectedSystem}&userId=${selectedUser}`
       );
 
-      if (!response.ok) throw new Error('Failed to fetch user permissions');
-      const data = await response.json();
       console.log('🔍 User permissions API response:', data);
       console.log('📄 Pages data:', data.data?.pages);
       console.log('🔐 Permissions data:', data.data?.permissions);
@@ -263,9 +258,7 @@ const UserPermissionsMatrix: React.FC = () => {
         system_id: selectedSystem
       }));
 
-      const response = await api.post(`${API_ENDPOINTS.ADMIN.PERMISSIONS}/user`, { permissions: permissionsToSave });
-
-      if (!response.ok) throw new Error('Failed to save permissions');
+      await api.post(`${API_ENDPOINTS.ADMIN.PERMISSIONS}/user`, { permissions: permissionsToSave });
       
       await fetchUserPermissions(); // Refresh data
       setError(null);
@@ -317,12 +310,9 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant || !selectedSystem) return;
 
     try {
-      const response = await api.get(
+      const result = await api.get(
         `/admin/export/user-permissions/excel?tenantId=${selectedTenant}&systemId=${selectedSystem}`
       );
-
-      if (!response.ok) throw new Error('Failed to export Excel');
-      const result = await response.json();
       
       if (result.success && result.data) {
         const worksheet = XLSX.utils.json_to_sheet(result.data);
@@ -340,22 +330,31 @@ const UserPermissionsMatrix: React.FC = () => {
     if (!selectedTenant || !selectedSystem) return;
 
     try {
-      const response = await api.get(
+      const result = await api.get(
         `/admin/export/user-permissions/pdf?tenantId=${selectedTenant}&systemId=${selectedSystem}`
       );
 
-      if (response.ok) {
-        const blob = await response.blob();
+      if (result.success && result.url) {
+        // If API returns a URL to the generated PDF
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = result.url;
+        a.download = result.filename || `user_permissions_${selectedTenant}_${selectedSystem}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else if (result.content) {
+        // If API returns HTML content
+        const blob = new Blob([result.content], { type: 'text/html' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `user_permissions_${selectedTenant}_${selectedSystem}.html`;
+        a.download = result.filename || `user_permissions_${selectedTenant}_${selectedSystem}.html`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-      } else {
-        throw new Error('Failed to export PDF');
+        document.body.removeChild(a);
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);

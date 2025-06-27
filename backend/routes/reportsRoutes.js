@@ -18,7 +18,9 @@ import {
   exportReportToExcel,
   getBudgetItems,
   exportBudgetItemsPDF,
-  getReportsDashboard
+  getReportsDashboard,
+  getFullTabarReport,
+  getTabarBudgetReport
 } from '../controllers/reportsController.js';
 import {
   exportFullTabarPDF,
@@ -33,13 +35,17 @@ const router = express.Router();
 // Dashboard route - reports overview (must be before /:id route)
 router.get('/reports-dashboard', auth, getReportsDashboard);
 
+// Full Tabar Report routes (must be before other routes to avoid conflicts)
+router.get('/full-tabar', auth, getFullTabarReport);
+router.get('/full-tabar/export-pdf', auth, exportFullTabarPDF);
+
+// Tabar Budget Report routes
+router.get('/tabar-budget', auth, getTabarBudgetReport);
+router.get('/tabar-budget/export-pdf', auth, exportTabarBudgetPDF);
+
 // Budget Items routes (must be before other routes to avoid conflicts)
 router.get('/budget-items', auth, getBudgetItems);
 router.post('/budget-items/export-pdf', auth, exportBudgetItemsPDF);
-
-// PDF Export routes from reportsPdfController
-router.get('/full-tabar/export-pdf', auth, exportFullTabarPDF);
-router.get('/tabar-budget/export-pdf', auth, exportTabarBudgetPDF);
 
 // Execution reports routes (must come before generic /:id routes)
 router.get('/execution', auth, getExecutionReports);

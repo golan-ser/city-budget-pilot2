@@ -67,15 +67,7 @@ const RolesManagement: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/tenants`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch tenants');
-      const data = await response.json();
+      const data = await AdminService.fetchTenants();
       setTenants(data.filter((t: Tenant) => t.status === 'active'));
     } catch (err) {
       setError('שגיאה בטעינת רשויות');

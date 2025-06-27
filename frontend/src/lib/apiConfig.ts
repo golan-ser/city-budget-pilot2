@@ -39,13 +39,20 @@ export const API_ENDPOINTS = {
 
   // Reports
   REPORTS: {
+    BASE: '/api/reports',
     DASHBOARD: '/api/reports/reports-dashboard',
-    PROJECTS: '/api/reports/projects',
-    BUDGET_ITEMS: '/api/budget-items',
-    BUDGET_ITEMS_REPORT: '/api/reports/budget-items',
+    BUDGET_ITEMS: '/api/reports/budget-items',
+    BUDGET_ITEMS_EXPORT_PDF: '/api/reports/budget-items/export-pdf',
     FULL_TABAR: '/api/reports/full-tabar',
-    EXPORT_PDF: '/api/reports/export/pdf',
-    EXPORT_EXCEL: '/api/reports/export/excel',
+    FULL_TABAR_EXPORT_PDF: '/api/reports/full-tabar/export-pdf',
+    TABAR_BUDGET: '/api/reports/tabar-budget',
+    TABAR_BUDGET_EXPORT_PDF: '/api/reports/tabar-budget/export-pdf',
+    INVOICES: '/api/reports/invoices',
+    MINISTRY: '/api/reports/ministry',
+    CASH_FLOW: '/api/reports/cash-flow',
+    BUDGET_EXECUTION: '/api/reports/budget-execution',
+    EXECUTION: '/api/reports/execution',
+    EXPORT: '/api/reports/export'
   },
 
   // Admin

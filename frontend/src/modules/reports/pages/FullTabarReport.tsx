@@ -171,24 +171,18 @@ export default function FullTabarReport() {
     try {
       setExportingPDF(true);
       
-      // בניית URL עם פרמטרים
-      const params = new URLSearchParams();
-      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-      if (filters.ministry && filters.ministry !== 'all') params.append('ministry', filters.ministry);
-      if (filters.year && filters.year !== 'all') params.append('year', filters.year);
+      // Convert filters to the format expected by the API
+      const apiFilters = {
+        year: filters.year && filters.year !== 'all' ? filters.year : undefined,
+        ministry: filters.ministry && filters.ministry !== 'all' ? filters.ministry : undefined,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        search: filters.search || undefined
+      };
       
-      const apiUrl = '';
-      const response = await fetch(`${apiUrl}/api/reports/full-tabar/export-pdf?${params.toString()}`, {
-        headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
-        }
-      });
+      console.log('📄 Exporting PDF with filters:', apiFilters);
+      const blob = await ReportsService.exportFullTabarExcel(apiFilters);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
+      // Download the file
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -209,10 +203,25 @@ export default function FullTabarReport() {
 
   const exportAsExcel = async () => {
     try {
-      const blob = await ReportsService.exportFullTabarExcel(sortedData);
-      ReportsService.downloadExcelFile(blob, 'full-tabar-report.xlsx');
+      // Convert filters to the format expected by the API
+      const apiFilters = {
+        year: filters.year && filters.year !== 'all' ? filters.year : undefined,
+        ministry: filters.ministry && filters.ministry !== 'all' ? filters.ministry : undefined,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        search: filters.search || undefined
+      };
+      
+      console.log('📊 Exporting Excel with filters:', apiFilters);
+      const blob = await ReportsService.exportFullTabarExcel(apiFilters);
+      ReportsService.downloadExcelFile(blob, `full-tabar-report-${new Date().getTime()}.xlsx`);
+      console.log('✅ Excel exported successfully');
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
+      console.error('❌ Error exporting to Excel:', error);
+      // Fallback to local export with current data
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(sortedData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Full Tabar Report');
+      XLSX.writeFile(wb, `full-tabar-report-${new Date().getTime()}.xlsx`);
     }
   };
 
@@ -229,19 +238,36 @@ export default function FullTabarReport() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const fullTabarData = await ReportsService.fetchFullTabar();
-        setData(fullTabarData.data || fullTabarData || []);
+        // Convert filters to the format expected by the API
+        const apiFilters = {
+          year: filters.year && filters.year !== 'all' ? filters.year : undefined,
+          ministry: filters.ministry && filters.ministry !== 'all' ? filters.ministry : undefined,
+          status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+          search: filters.search || undefined
+        };
+        
+        console.log('🔍 Loading full tabar data with filters:', apiFilters);
+        const fullTabarData = await ReportsService.fetchFullTabar(apiFilters);
+        
+        // Handle the response properly - it's a FullTabarReport object with data property
+        if (fullTabarData && fullTabarData.data) {
+          setData(fullTabarData.data);
+          console.log('✅ Full tabar data loaded:', fullTabarData.data.length, 'records');
+        } else {
+          setData([]);
+          console.log('⚠️ No data received from API');
+        }
       } catch (error) {
-        console.error('Error loading full tabar data:', error);
-        // Fallback to mock data
-        setData(mockData);
+        console.error('❌ Error loading full tabar data:', error);
+        // Fallback to empty array since we're using real API now
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [filters]); // Re-run when filters change
 
   if (loading) {
     return (
@@ -260,6 +286,49 @@ export default function FullTabarReport() {
               ))}
             </div>
             <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show message when no data is available
+  if (!loading && data.length === 0) {
+    return (
+      <div className="p-6 space-y-6 max-w-full mx-auto" dir="rtl">
+        {/* Header Section */}
+        <Card className="border-none shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <FileText className="h-8 w-8 text-blue-600" />
+              דוח תב"רים מלא
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+              סקירה מלאה של כל תב"רי העירייה כולל סעיפים תקציביים, מימון וסטטוסים
+            </p>
+          </CardHeader>
+        </Card>
+
+        {/* No Data Message */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                אין נתונים זמינים כרגע
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                המערכת מתחברת לנתונים האמיתיים מהמסד נתונים.<br/>
+                אם הבעיה נמשכת, אנא פנה למנהל המערכת.
+              </p>
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="flex items-center gap-2 mx-auto"
+              >
+                <RefreshCw className="h-4 w-4" />
+                רענן דף
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

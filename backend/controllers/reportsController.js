@@ -1080,3 +1080,208 @@ export const getReportsDashboard = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch reports dashboard data' });
   }
 };
+
+// === דוח תב"רים מלא (Full Tabar Report) ===
+export const getFullTabarReport = async (req, res) => {
+  try {
+    console.log('📊 Fetching Full Tabar Report...');
+    
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    const { year, ministry, status, search } = req.query;
+    
+    let query = `
+      SELECT 
+        t.id,
+        t.tabar_number::text,
+        t.name,
+        t.year,
+        COALESCE(t.ministry, 'לא מוגדר') as ministry,
+        COALESCE(t.department, 'לא מוגדר') as department,
+        COALESCE(t.status, 'פעיל') as status,
+        COALESCE(t.total_authorized, 0) as total_authorized,
+        COALESCE(t.municipal_participation, 0) as municipal_participation,
+        COALESCE(t.additional_funders, 0) as additional_funders,
+        t.open_date,
+        t.close_date,
+        COALESCE(t.permission_number, '') as permission_number,
+        COALESCE(t.department, '') as budget_item,
+        COALESCE(t.total_authorized, 0) as budget,
+        COALESCE(t.total_executed, 0) as spent,
+        t.created_at as updated_at
+      FROM tabarim t
+      WHERE t.tenant_id = $1
+    `;
+    
+    const params = [tenantId];
+    let paramIndex = 2;
+    
+    // Apply filters
+    if (year && year !== 'all') {
+      query += ` AND t.year = $${paramIndex}`;
+      params.push(parseInt(year));
+      paramIndex++;
+    }
+    
+    if (ministry && ministry !== 'all') {
+      query += ` AND t.ministry = $${paramIndex}`;
+      params.push(ministry);
+      paramIndex++;
+    }
+    
+    if (status && status !== 'all') {
+      query += ` AND t.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    
+    if (search) {
+      query += ` AND (t.name ILIKE $${paramIndex} OR t.tabar_number::text ILIKE $${paramIndex} OR t.department ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+    
+    query += ` ORDER BY t.created_at DESC`;
+    
+    console.log('📊 Executing query:', query);
+    console.log('📊 With params:', params);
+    
+    const result = await pool.query(query, params);
+    
+    // Calculate totals
+    const totalBudget = result.rows.reduce((sum, item) => sum + parseFloat(item.budget || 0), 0);
+    const totalSpent = result.rows.reduce((sum, item) => sum + parseFloat(item.spent || 0), 0);
+    const utilizationRate = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    
+    const response = {
+      data: result.rows,
+      totals: {
+        totalBudget,
+        totalSpent,
+        utilizationRate,
+        totalProjects: result.rows.length
+      }
+    };
+    
+    console.log('✅ Full Tabar Report fetched successfully:', result.rows.length, 'records');
+    res.json(response);
+    
+  } catch (error) {
+    console.error('❌ Error fetching full tabar report:', error);
+    res.status(500).json({ error: 'Failed to fetch full tabar report', details: error.message });
+  }
+};
+
+// === דוח תקציב תב"רים (Tabar Budget Report) ===
+export const getTabarBudgetReport = async (req, res) => {
+  try {
+    console.log('📊 Fetching Tabar Budget Report...');
+    
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    const { year, ministry, status } = req.query;
+    
+    let query = `
+      SELECT 
+        t.id,
+        t.tabar_number,
+        t.name as project_name,
+        t.year,
+        COALESCE(t.ministry, 'לא מוגדר') as ministry,
+        COALESCE(t.department, 'לא מוגדר') as department,
+        COALESCE(t.status, 'פעיל') as status,
+        COALESCE(t.total_authorized, 0) as approved_budget,
+        COALESCE(t.total_executed, 0) as executed_budget,
+        COALESCE(t.municipal_participation, 0) as municipal_participation,
+        CASE 
+          WHEN t.total_authorized > 0 
+          THEN ROUND((t.total_executed / t.total_authorized) * 100, 2)
+          ELSE 0 
+        END as utilization_percentage,
+        t.open_date,
+        t.close_date,
+        t.created_at
+      FROM tabarim t
+      WHERE t.tenant_id = $1
+    `;
+    
+    const params = [tenantId];
+    let paramIndex = 2;
+    
+    // Apply filters
+    if (year && year !== 'all') {
+      query += ` AND t.year = $${paramIndex}`;
+      params.push(parseInt(year));
+      paramIndex++;
+    }
+    
+    if (ministry && ministry !== 'all') {
+      query += ` AND t.ministry = $${paramIndex}`;
+      params.push(ministry);
+      paramIndex++;
+    }
+    
+    if (status && status !== 'all') {
+      query += ` AND t.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    
+    query += ` ORDER BY t.total_authorized DESC`;
+    
+    console.log('📊 Executing budget query:', query);
+    console.log('📊 With params:', params);
+    
+    const result = await pool.query(query, params);
+    
+    // Calculate analysis
+    const totalApproved = result.rows.reduce((sum, item) => sum + parseFloat(item.approved_budget || 0), 0);
+    const totalExecuted = result.rows.reduce((sum, item) => sum + parseFloat(item.executed_budget || 0), 0);
+    const totalMunicipal = result.rows.reduce((sum, item) => sum + parseFloat(item.municipal_participation || 0), 0);
+    const overallUtilization = totalApproved > 0 ? (totalExecuted / totalApproved) * 100 : 0;
+    
+    // Group by ministry for analysis
+    const ministryAnalysis = {};
+    result.rows.forEach(row => {
+      const ministry = row.ministry;
+      if (!ministryAnalysis[ministry]) {
+        ministryAnalysis[ministry] = {
+          ministry,
+          totalApproved: 0,
+          totalExecuted: 0,
+          projectCount: 0
+        };
+      }
+      ministryAnalysis[ministry].totalApproved += parseFloat(row.approved_budget || 0);
+      ministryAnalysis[ministry].totalExecuted += parseFloat(row.executed_budget || 0);
+      ministryAnalysis[ministry].projectCount += 1;
+    });
+    
+    const response = {
+      budgetData: result.rows,
+      analysis: {
+        totalApproved,
+        totalExecuted,
+        totalMunicipal,
+        overallUtilization,
+        projectCount: result.rows.length,
+        ministryBreakdown: Object.values(ministryAnalysis)
+      }
+    };
+    
+    console.log('✅ Tabar Budget Report fetched successfully:', result.rows.length, 'records');
+    res.json(response);
+    
+  } catch (error) {
+    console.error('❌ Error fetching tabar budget report:', error);
+    res.status(500).json({ error: 'Failed to fetch tabar budget report', details: error.message });
+  }
+};

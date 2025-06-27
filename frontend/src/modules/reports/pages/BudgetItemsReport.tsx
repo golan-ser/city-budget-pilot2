@@ -85,19 +85,30 @@ export default function BudgetItemsReport() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const budgetItems = await ReportsService.fetchBudgetItems();
-          setData(budgetItems);
+        
+        // Convert filters to the format expected by the API
+        const apiFilters = {
+          department: filters.department && filters.department !== 'all' ? filters.department : undefined,
+          status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+          year: filters.fiscal_year && filters.fiscal_year !== 'all' ? filters.fiscal_year : undefined,
+          search: filters.search || undefined
+        };
+        
+        console.log('📊 Loading budget items with filters:', apiFilters);
+        const budgetItems = await ReportsService.fetchBudgetItems(apiFilters);
+        setData(budgetItems);
+        console.log('✅ Budget items loaded:', budgetItems.length, 'items');
       } catch (error) {
-        console.error('Error loading budget items:', error);
-        // Fallback to mock data
-        setData(mockData);
+        console.error('❌ Error loading budget items:', error);
+        // Fallback to empty array since we're using real API now
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [filters]); // Re-run when filters change
 
   // Mock data as fallback
   const mockData: BudgetItem[] = [
@@ -427,6 +438,59 @@ export default function BudgetItemsReport() {
           <RefreshCw className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">טוען נתונים...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show message when no data is available
+  if (!loading && data.length === 0) {
+    return (
+      <div className="p-6 space-y-6 max-w-full mx-auto" dir="rtl">
+        {/* Navigation */}
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/reports')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            חזרה לדוחות
+          </Button>
+          <span>/</span>
+          <span className="text-gray-900 font-medium">דוח סעיפי תקציב</span>
+        </div>
+
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <DollarSign className="h-6 w-6 text-blue-600" />
+            דוח סעיפי תקציב
+          </h1>
+        </div>
+
+        {/* No Data Message */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                אין נתונים זמינים כרגע
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                המערכת מתחברת לנתונים האמיתיים מהמסד נתונים.<br/>
+                אם הבעיה נמשכת, אנא פנה למנהל המערכת.
+              </p>
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="flex items-center gap-2 mx-auto"
+              >
+                <RefreshCw className="h-4 w-4" />
+                רענן דף
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
