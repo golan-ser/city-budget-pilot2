@@ -71,12 +71,10 @@ export const EnhancedDashboard: React.FC = () => {
     try {
       setExportingPDF(true);
       
-      // Use the new dashboard service
-      await DashboardService.downloadPDF();
-      
+      // For now, show a simple message since PDF export is not implemented
       toast({
-        title: "הדוח יוצא בהצלחה",
-        description: "הדוח הורד למחשב שלך בפורמט PDF",
+        title: "ייצוא PDF",
+        description: "ייצוא PDF יהיה זמין בקרוב",
       });
     } catch (error) {
       console.error('Error exporting PDF:', error);
@@ -146,6 +144,52 @@ export const EnhancedDashboard: React.FC = () => {
 
   const totalProjects = (data.projectStatus || []).reduce((sum, item) => sum + (item?.count || 0), 0);
   const totalBudgetFromProjects = (data.projectStatus || []).reduce((sum, item) => sum + (item?.total_budget || 0), 0);
+
+  // Create properly typed data for components
+  const projectStatusData = (data.projectStatus || []).map(item => ({
+    status: item.status,
+    count: item.count,
+    percentage: totalProjects > 0 ? (item.count / totalProjects) * 100 : 0,
+    total_budget: item.total_budget || 0,
+    formatted_budget: `₪${(item.total_budget || 0).toLocaleString('he-IL')}`,
+    color: item.status === 'פעיל' ? '#10b981' : item.status === 'הושלם' ? '#3b82f6' : '#f59e0b'
+  }));
+
+  const alertsData = (data.alerts || []).map(alert => ({
+    id: alert.id,
+    type: alert.type as 'warning' | 'error' | 'info' | 'success',
+    category: 'budget' as const,
+    title: alert.type === 'error' ? 'שגיאה' : alert.type === 'warning' ? 'אזהרה' : 'מידע',
+    message: alert.message,
+    severity: 'medium' as const,
+    created_at: alert.timestamp
+  }));
+
+  const trendsData = {
+    budgetUtilization: (data.trends?.budgetUtilization || []).map(item => ({
+      month: item.month,
+      monthName: item.month,
+      value: item.amount,
+      formatted: `₪${item.amount.toLocaleString('he-IL')}`
+    })),
+    monthlyExecution: (data.trends?.monthlyExecution || []).map(item => ({
+      month: item.month,
+      monthName: item.month,
+      value: item.amount,
+      formatted: `₪${item.amount.toLocaleString('he-IL')}`
+    })),
+    newProjects: [],
+    executionReports: []
+  };
+
+  const budgetByMinistryData = (data.budgetByMinistry || []).map(item => ({
+    ministry: item.ministry,
+    total_authorized: item.amount,
+    total_executed: item.amount * (item.percentage / 100),
+    formatted_authorized: `₪${item.amount.toLocaleString('he-IL')}`,
+    formatted_executed: `₪${(item.amount * (item.percentage / 100)).toLocaleString('he-IL')}`,
+    utilization_percentage: item.percentage
+  }));
 
   return (
     <div className="space-y-6">
@@ -219,56 +263,56 @@ export const EnhancedDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <KPICard
               title="תקציב כולל"
-              value={data.kpis.totalBudget.formatted}
+              value={data.kpis?.totalBudget?.formatted || "₪0"}
               change="סך כל התקציב המאושר"
               changeType="neutral"
-              trend={[data.kpis.totalBudget.trend]}
+              trend={data.kpis?.totalBudget?.trend ? [data.kpis.totalBudget.trend] : [0]}
               icon={<BarChart3 className="h-6 w-6" />}
             />
             
             <KPICard
               title="תקציב מנוצל"
-              value={data.kpis.utilizedBudget.formatted}
-              change={`${data.kpis.utilizedBudget.percentage.toFixed(1)}% מהתקציב`}
+              value={data.kpis?.utilizedBudget?.formatted || "₪0"}
+              change={`${(data.kpis?.utilizedBudget?.percentage || 0).toFixed(1)}% מהתקציב`}
               changeType="neutral"
-              trend={[data.kpis.utilizedBudget.trend]}
+              trend={data.kpis?.utilizedBudget?.trend ? [data.kpis.utilizedBudget.trend] : [0]}
               icon={<TrendingUp className="h-6 w-6" />}
-              percentage={data.kpis.utilizedBudget.percentage}
+              percentage={data.kpis?.utilizedBudget?.percentage || 0}
             />
             
             <KPICard
               title="הכנסות חודשיות"
-              value={data.kpis.monthlyRevenue.formatted}
+              value={data.kpis?.monthlyRevenue?.formatted || "₪0"}
               change="הכנסות החודש הנוכחי"
               changeType="neutral"
-              trend={[data.kpis.monthlyRevenue.trend]}
+              trend={data.kpis?.monthlyRevenue?.trend ? [data.kpis.monthlyRevenue.trend] : [0]}
               icon={<Calendar className="h-6 w-6" />}
             />
             
             <KPICard
               title="פרויקטים הושלמו"
-              value={data.kpis.completedProjects.value.toString()}
-              change={`${data.kpis.completedProjects.percentage.toFixed(1)}% מכלל הפרויקטים`}
+              value={(data.kpis?.completedProjects?.value || 0).toString()}
+              change={`${(data.kpis?.completedProjects?.percentage || 0).toFixed(1)}% מכלל הפרויקטים`}
               changeType="positive"
-              trend={[data.kpis.completedProjects.trend]}
+              trend={data.kpis?.completedProjects?.trend ? [data.kpis.completedProjects.trend] : [0]}
               icon={<Building2 className="h-6 w-6" />}
-              percentage={data.kpis.completedProjects.percentage}
+              percentage={data.kpis?.completedProjects?.percentage || 0}
             />
             
             <KPICard
               title="פרויקטים פעילים"
-              value={data.kpis.activeProjects.value.toString()}
+              value={(data.kpis?.activeProjects?.value || 0).toString()}
               change="פרויקטים בביצוע"
               changeType="neutral"
-              trend={[data.kpis.activeProjects.trend]}
+              trend={data.kpis?.activeProjects?.trend ? [data.kpis.activeProjects.trend] : [0]}
               icon={<Users className="h-6 w-6" />}
             />
             
             <KPICard
               title="ממתינים לאישור"
-              value={data.kpis.pendingApprovals.value.toString()}
-              change={`כולל ${data.kpis.pendingApprovals.urgent} דחופים`}
-              changeType={data.kpis.pendingApprovals.urgent > 0 ? "negative" : "neutral"}
+              value={(data.kpis?.pendingApprovals?.value || 0).toString()}
+              change={`כולל ${data.kpis?.pendingApprovals?.urgent || 0} דחופים`}
+              changeType={(data.kpis?.pendingApprovals?.urgent || 0) > 0 ? "negative" : "neutral"}
               icon={<FileText className="h-6 w-6" />}
             />
           </div>
@@ -276,19 +320,19 @@ export const EnhancedDashboard: React.FC = () => {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ProjectStatusChart
-              data={data.projectStatus}
+              data={projectStatusData}
               totalProjects={totalProjects}
               totalBudget={totalBudgetFromProjects}
               formattedTotalBudget={`₪${totalBudgetFromProjects.toLocaleString('he-IL')}`}
             />
             
             <TrendCharts
-              data={data.trendData}
+              data={trendsData as any}
             />
           </div>
 
           {/* Alerts Section */}
-          <SmartAlerts alerts={data.alerts} />
+          <SmartAlerts alerts={alertsData as any} />
         </TabsContent>
 
         <TabsContent value="budget" className="space-y-6">
@@ -300,8 +344,8 @@ export const EnhancedDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <TrendCharts
-                  data={data.trendData}
-                  budgetByMinistry={data.budgetByMinistry}
+                  data={trendsData as any}
+                  budgetByMinistry={budgetByMinistryData as any}
                   type="ministry-comparison"
                 />
               </CardContent>
@@ -314,7 +358,7 @@ export const EnhancedDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <TrendCharts
-                  data={data.trendData}
+                  data={trendsData as any}
                   type="monthly-execution"
                 />
               </CardContent>
@@ -325,7 +369,7 @@ export const EnhancedDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <KPICard
               title="תקציב כולל"
-              value={data.kpis.totalBudget.formatted}
+              value={data.kpis?.totalBudget?.formatted || "₪0"}
               change="סך כל התקציב המאושר"
               changeType="neutral"
               icon={<BarChart3 className="h-6 w-6" />}
@@ -333,16 +377,16 @@ export const EnhancedDashboard: React.FC = () => {
             
             <KPICard
               title="ביצוע בפועל"
-              value={data.kpis.utilizedBudget.formatted}
-              change={`${data.kpis.utilizedBudget.percentage.toFixed(1)}% ניצול`}
+              value={data.kpis?.utilizedBudget?.formatted || "₪0"}
+              change={`${(data.kpis?.utilizedBudget?.percentage || 0).toFixed(1)}% ניצול`}
               changeType="neutral"
               icon={<TrendingUp className="h-6 w-6" />}
-              percentage={data.kpis.utilizedBudget.percentage}
+              percentage={data.kpis?.utilizedBudget?.percentage || 0}
             />
             
             <KPICard
               title="יתרה זמינה"
-              value={`₪${(data.kpis.totalBudget.value - data.kpis.utilizedBudget.value).toLocaleString('he-IL')}`}
+              value={`₪${((data.kpis?.totalBudget?.value || 0) - (data.kpis?.utilizedBudget?.value || 0)).toLocaleString('he-IL')}`}
               change="תקציב זמין להקצאה"
               changeType="neutral"
               icon={<Calendar className="h-6 w-6" />}
@@ -353,14 +397,14 @@ export const EnhancedDashboard: React.FC = () => {
         <TabsContent value="projects" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ProjectStatusChart
-              data={data.projectStatus}
+              data={projectStatusData}
               totalProjects={totalProjects}
               totalBudget={totalBudgetFromProjects}
               formattedTotalBudget={`₪${totalBudgetFromProjects.toLocaleString('he-IL')}`}
             />
             
             <TrendCharts
-              data={data.trendData}
+              data={trendsData as any}
             />
           </div>
 
@@ -376,7 +420,7 @@ export const EnhancedDashboard: React.FC = () => {
             
             <KPICard
               title="פרויקטים פעילים"
-              value={data.kpis.activeProjects.value.toString()}
+              value={(data.kpis?.activeProjects?.value || 0).toString()}
               change="פרויקטים בביצוע"
               changeType="neutral"
               icon={<Users className="h-6 w-6" />}
@@ -384,25 +428,25 @@ export const EnhancedDashboard: React.FC = () => {
             
             <KPICard
               title="פרויקטים הושלמו"
-              value={data.kpis.completedProjects.value.toString()}
-              change={`${data.kpis.completedProjects.percentage.toFixed(1)}% מכלל`}
+              value={(data.kpis?.completedProjects?.value || 0).toString()}
+              change={`${(data.kpis?.completedProjects?.percentage || 0).toFixed(1)}% מכלל`}
               changeType="positive"
               icon={<TrendingUp className="h-6 w-6" />}
-              percentage={data.kpis.completedProjects.percentage}
+              percentage={data.kpis?.completedProjects?.percentage || 0}
             />
             
             <KPICard
               title="ממתינים לאישור"
-              value={data.kpis.pendingApprovals.value.toString()}
-              change={`כולל ${data.kpis.pendingApprovals.urgent} דחופים`}
-              changeType={data.kpis.pendingApprovals.urgent > 0 ? "negative" : "neutral"}
+              value={(data.kpis?.pendingApprovals?.value || 0).toString()}
+              change={`כולל ${data.kpis?.pendingApprovals?.urgent || 0} דחופים`}
+              changeType={(data.kpis?.pendingApprovals?.urgent || 0) > 0 ? "negative" : "neutral"}
               icon={<FileText className="h-6 w-6" />}
             />
           </div>
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-6">
-          <SmartAlerts alerts={data.alerts} />
+          <SmartAlerts alerts={alertsData as any} />
         </TabsContent>
       </Tabs>
     </div>

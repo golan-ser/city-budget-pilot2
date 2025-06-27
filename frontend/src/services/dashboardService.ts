@@ -17,6 +17,24 @@ export interface DashboardData {
       change?: string;
       trend?: number;
     };
+    monthlyRevenue?: {
+      value: number;
+      formatted: string;
+      trend?: number;
+    };
+    completedProjects?: {
+      value: number;
+      percentage: number;
+      trend?: number;
+    };
+    activeProjects?: {
+      value: number;
+      trend?: number;
+    };
+    pendingApprovals?: {
+      value: number;
+      urgent: number;
+    };
   };
   projectStatus?: Array<{
     status: string;
