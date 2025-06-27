@@ -25,7 +25,7 @@ export const API_ENDPOINTS = {
   
   // Dashboard
   DASHBOARD: {
-    MAIN: '/api/dashboard',
+    MAIN: '/api/dashboard/data',
     COMBINED: '/api/dashboard/combined',
     ANALYTICS: '/api/dashboard/analytics',
     EXPORT_PDF: '/api/dashboard/export/pdf',
@@ -39,7 +39,7 @@ export const API_ENDPOINTS = {
 
   // Reports
   REPORTS: {
-    DASHBOARD: '/api/reports/dashboard',
+    DASHBOARD: '/api/reports/reports-dashboard',
     PROJECTS: '/api/reports/projects',
     BUDGET_ITEMS: '/api/budget-items',
     BUDGET_ITEMS_REPORT: '/api/reports/budget-items',

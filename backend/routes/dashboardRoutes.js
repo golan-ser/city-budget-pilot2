@@ -14,6 +14,9 @@ import {
 
 const router = Router();
 
+// נתיב root - יחזיר נתוני דשבורד בסיסיים
+router.get('/', getDashboardData);
+
 // נתיב לדשבורד משופר חדש
 router.get('/enhanced', getEnhancedDashboard);
 

@@ -17,7 +17,8 @@ import {
   getCashFlowReport,
   exportReportToExcel,
   getBudgetItems,
-  exportBudgetItemsPDF
+  exportBudgetItemsPDF,
+  getReportsDashboard
 } from '../controllers/reportsController.js';
 import {
   exportFullTabarPDF,
@@ -29,6 +30,9 @@ import auth from '../middleware/auth.js';
 const router = express.Router();
 
 // 🔐 SECURITY: All routes require authentication
+// Dashboard route - reports overview (must be before /:id route)
+router.get('/reports-dashboard', auth, getReportsDashboard);
+
 // Budget Items routes (must be before other routes to avoid conflicts)
 router.get('/budget-items', auth, getBudgetItems);
 router.post('/budget-items/export-pdf', auth, exportBudgetItemsPDF);
