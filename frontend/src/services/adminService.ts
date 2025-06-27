@@ -105,23 +105,7 @@ export class AdminService {
       return response;
     } catch (error: any) {
       console.error('AdminService.fetchTenants error:', error);
-      // Fallback to mock data if API fails
-      return [
-        {
-          id: 1,
-          name: 'עיריית ירושלים',
-          code: 'JER001',
-          status: 'פעיל',
-          created_date: '2024-01-01'
-        },
-        {
-          id: 2,  
-          name: 'עיריית תל אביב',
-          code: 'TLV001',
-          status: 'פעיל',
-          created_date: '2024-01-15'
-        }
-      ];
+      throw new Error(`Failed to fetch tenants: ${error.message}`);
     }
   }
 
@@ -131,12 +115,7 @@ export class AdminService {
   static async createTenant(tenantData: any): Promise<any> {
     try {
       const response = await api.post(API_ENDPOINTS.ADMIN.TENANTS, tenantData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to create tenant`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.createTenant error:', error);
       throw new Error(`Failed to create tenant: ${error.message}`);
@@ -149,12 +128,7 @@ export class AdminService {
   static async updateTenant(tenantId: string | number, tenantData: any): Promise<any> {
     try {
       const response = await api.put(`${API_ENDPOINTS.ADMIN.TENANTS}/${tenantId}`, tenantData);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to update tenant`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.updateTenant error:', error);
       throw new Error(`Failed to update tenant: ${error.message}`);
@@ -166,11 +140,7 @@ export class AdminService {
    */
   static async deleteTenant(tenantId: string | number): Promise<void> {
     try {
-      const response = await api.delete(`${API_ENDPOINTS.ADMIN.TENANTS}/${tenantId}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to delete tenant`);
-      }
+      await api.delete(`${API_ENDPOINTS.ADMIN.TENANTS}/${tenantId}`);
     } catch (error: any) {
       console.error('AdminService.deleteTenant error:', error);
       throw new Error(`Failed to delete tenant: ${error.message}`);
@@ -183,12 +153,7 @@ export class AdminService {
   static async fetchTenantSystems(tenantId: string | number): Promise<any[]> {
     try {
       const response = await api.get(`${API_ENDPOINTS.ADMIN.TENANTS}/${tenantId}/systems`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch tenant systems`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.fetchTenantSystems error:', error);
       throw new Error(`Failed to fetch tenant systems: ${error.message}`);
@@ -201,12 +166,7 @@ export class AdminService {
   static async fetchSystems(): Promise<any[]> {
     try {
       const response = await api.get(API_ENDPOINTS.ADMIN.SYSTEMS);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch systems`);
-      }
-      
-      return response.json();
+      return response;
     } catch (error: any) {
       console.error('AdminService.fetchSystems error:', error);
       throw new Error(`Failed to fetch systems: ${error.message}`);

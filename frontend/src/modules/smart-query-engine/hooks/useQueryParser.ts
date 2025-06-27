@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { API_BASE_URL } from '../../../lib/apiConfig';
 
 /**
  * Two-Stage Architecture Frontend Hook
@@ -137,10 +138,11 @@ export const useQueryParser = () => {
     }));
 
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/process', {
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024'}`,
         },
         body: JSON.stringify({
           query,
@@ -236,10 +238,11 @@ export const useQueryParser = () => {
     }));
 
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/confirm', {
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024'}`,
         },
         body: JSON.stringify({
           parsedIntent: state.parsedIntent,
@@ -327,7 +330,7 @@ export const useQueryParser = () => {
    */
   const getSystemStatus = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/status');
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/status`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -343,7 +346,7 @@ export const useQueryParser = () => {
    */
   const getDomains = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/domains');
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/domains`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -360,8 +363,8 @@ export const useQueryParser = () => {
   const getExamples = useCallback(async (domain?: string) => {
     try {
       const url = domain 
-        ? `http://localhost:3000/api/smart-query/examples?domain=${domain}`
-        : 'http://localhost:3000/api/smart-query/examples';
+        ? `${API_BASE_URL}/api/smart-query/examples?domain=${domain}`
+        : `${API_BASE_URL}/api/smart-query/examples`;
         
       const response = await fetch(url);
       if (!response.ok) {
@@ -379,10 +382,11 @@ export const useQueryParser = () => {
    */
   const validateQuery = useCallback(async (query: string) => {
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/validate', {
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024'}`,
         },
         body: JSON.stringify({ query })
       });
@@ -444,9 +448,9 @@ export const useSystemInfo = () => {
     setIsLoading(true);
     try {
       const [status, domains, examples] = await Promise.all([
-        fetch('http://localhost:3000/api/smart-query/status').then(r => r.json()),
-        fetch('http://localhost:3000/api/smart-query/domains').then(r => r.json()),
-        fetch('http://localhost:3000/api/smart-query/examples').then(r => r.json())
+        fetch(`${API_BASE_URL}/api/smart-query/status`).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/smart-query/domains`).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/smart-query/examples`).then(r => r.json())
       ]);
 
       setSystemInfo({ status, domains, examples });
@@ -473,7 +477,7 @@ export const useHealthCheck = () => {
 
   const checkHealth = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/smart-query/health');
+      const response = await fetch(`${API_BASE_URL}/api/smart-query/health`);
       const healthData = await response.json();
       setHealth(healthData);
       setLastCheck(new Date().toISOString());

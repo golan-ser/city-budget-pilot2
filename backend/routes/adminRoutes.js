@@ -203,6 +203,9 @@ router.get('/profile', requireAdmin, adminController.getCurrentAdminProfile);
 // GET /api/admin/statistics - סטטיסטיקות מערכת מפורטות (זמנית ללא requireAdmin לבדיקה)
 router.get('/statistics', getSystemStatistics);
 
+// GET /api/admin/statistics/activity - פעילות אחרונה (זמנית ללא requireAdmin לבדיקה)
+router.get('/statistics/activity', getRecentActivity);
+
 // GET /api/admin/recent-activity - פעילות אחרונה (זמנית ללא requireAdmin לבדיקה)
 router.get('/recent-activity', getRecentActivity);
 
