@@ -47,7 +47,8 @@ app.use(limiter);
 // Enhanced CORS configuration with proper header handling
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+    // Always include these domains regardless of environment variables
+    const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:3000',
       'https://city-budget-pilot2.vercel.app',
@@ -58,13 +59,23 @@ const corsOptions = {
       'https://city-budget-frontend-v2-git-main-fintecity.vercel.app'
     ];
     
+    // Add any additional origins from environment variable
+    if (process.env.ALLOWED_ORIGINS) {
+      const envOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+      allowedOrigins.push(...envOrigins);
+    }
+    
+    console.log('🌐 Current allowed origins:', allowedOrigins);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS allowed for origin:', origin);
       callback(null, true);
     } else {
       console.warn(`🚫 CORS blocked origin: ${origin}`);
+      console.warn('🚫 Available origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
