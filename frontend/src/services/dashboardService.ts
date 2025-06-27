@@ -2,11 +2,60 @@ import { api } from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/apiConfig';
 
 export interface DashboardData {
-  totalBudget: number;
-  totalProjects: number;
-  totalUtilized: number;
-  utilizationRate: number;
-  // Add more fields as needed
+  kpis?: {
+    totalBudget?: {
+      value: number;
+      formatted: string;
+      change?: string;
+      changeType?: string;
+      trend?: number;
+    };
+    utilizedBudget?: {
+      value: number;
+      formatted: string;
+      percentage: number;
+      change?: string;
+      trend?: number;
+    };
+  };
+  projectStatus?: Array<{
+    status: string;
+    count: number;
+    total_budget?: number;
+  }>;
+  budgetByMinistry?: Array<{
+    ministry: string;
+    amount: number;
+    percentage: number;
+  }>;
+  alerts?: Array<{
+    id: string;
+    type: 'warning' | 'error' | 'info';
+    message: string;
+    timestamp: string;
+  }>;
+  trends?: {
+    budgetUtilization?: Array<{
+      month: string;
+      amount: number;
+    }>;
+    monthlyExecution?: Array<{
+      month: string;
+      amount: number;
+    }>;
+  };
+  recentReports?: Array<{
+    id: string;
+    title: string;
+    date: string;
+    status: string;
+  }>;
+  lastUpdated?: string;
+  // Legacy fields for backward compatibility
+  totalBudget?: number;
+  totalProjects?: number;
+  totalUtilized?: number;
+  utilizationRate?: number;
 }
 
 export interface AnalyticsData {
@@ -43,6 +92,36 @@ export class DashboardService {
       console.error('DashboardService.fetchCombinedData error:', error);
       // Fallback to mock data if API fails
       return {
+        kpis: {
+          totalBudget: {
+            value: 125000000,
+            formatted: '₪125,000,000',
+            change: '+8%',
+            changeType: 'positive'
+          },
+          utilizedBudget: {
+            value: 87500000,
+            formatted: '₪87,500,000',
+            percentage: 70,
+            change: '70% מהתקציב'
+          }
+        },
+        projectStatus: [
+          { status: 'פעיל', count: 8, total_budget: 45000000 },
+          { status: 'בתכנון', count: 5, total_budget: 31250000 },
+          { status: 'הושלם', count: 3, total_budget: 25000000 },
+          { status: 'מושהה', count: 2, total_budget: 12500000 }
+        ],
+        alerts: [
+          {
+            id: '1',
+            type: 'warning',
+            message: 'פרויקט תשתית דרכים חורג מהתקציב ב-15%',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+          }
+        ],
+        lastUpdated: new Date().toISOString(),
+        // Legacy fields
         totalBudget: 125000000,
         totalProjects: 18,
         totalUtilized: 87500000,
@@ -125,9 +204,7 @@ export class DashboardService {
    */
   static async exportToPDF(): Promise<Blob> {
     try {
-      const response = await api.get(API_ENDPOINTS.DASHBOARD.EXPORT_PDF, {
-        responseType: 'blob'
-      });
+      const response = await api.get(API_ENDPOINTS.DASHBOARD.EXPORT_PDF);
       return response;
     } catch (error) {
       console.error('DashboardService.exportToPDF error:', error);
