@@ -33,6 +33,8 @@ const port = process.env.PORT || 3000;
 app.use(helmet());
 
 // Rate limiting
+app.set('trust proxy', 1); // Trust first proxy for Railway/Vercel deployment
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
@@ -51,7 +53,9 @@ const corsOptions = {
       'https://city-budget-pilot2.vercel.app',
       'https://city-budget-pilot2-207f5wt8i-fintecity.vercel.app',
       'https://city-budget-frontend-v2.vercel.app',
-      'https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app'
+      'https://city-budget-frontend-v2-a6rn4ukta-fintecity.vercel.app',
+      'https://city-budget-frontend-v2-bjauaoxvv-fintecity.vercel.app',
+      'https://city-budget-frontend-v2-git-main-fintecity.vercel.app'
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -78,6 +82,15 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-demo-token');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb', charset: 'utf-8' }));
