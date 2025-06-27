@@ -22,6 +22,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { AdminService } from '@/services/adminService';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Tenant {
   tenant_id: number;
@@ -132,27 +133,24 @@ const TenantsManagement: React.FC = () => {
     }
   };
 
-  const handleToggleSystem = async (tenantId: number, systemId: number, isActive: boolean) => {
+  const updateTenantSystem = async (tenantId: number, systemId: number, isActive: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/tenants/${tenantId}/systems/${systemId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/tenants/${tenantId}/systems/${systemId}`, {
         method: 'PUT',
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ isActive })
+        body: JSON.stringify({ is_active: isActive })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update tenant system');
-      }
-
-      // Refresh tenant systems
-      if (selectedTenant) {
-        await fetchTenantSystems(selectedTenant.tenant_id);
-      }
+      if (!response.ok) throw new Error('Failed to update tenant system');
+      
+      // Refresh data
+      fetchTenants();
+      fetchSystems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בעדכון מערכת');
+      setError('שגיאה בעדכון מערכת לרשות');
     }
   };
 
@@ -346,7 +344,7 @@ const TenantsManagement: React.FC = () => {
                       <Switch
                         checked={system.tenant_active || false}
                         onCheckedChange={(checked) => 
-                          handleToggleSystem(selectedTenant.tenant_id, system.system_id, checked)
+                          updateTenantSystem(selectedTenant.tenant_id, system.system_id, checked)
                         }
                       />
                       {system.tenant_active ? (

@@ -5,18 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, FileText, BarChart3, Building2, Settings, Users, FileText as LogIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { API_BASE_URL } from '../lib/apiConfig';
 
 import TenantsManagement from '@/components/admin/TenantsManagement';
 import SystemsManagement from '@/components/admin/SystemsManagement';
 import AuditLog from '@/components/admin/AuditLog';
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { AdminService } from '@/services/adminService';
+import { PermissionsMatrix } from '@/components/admin/PermissionsMatrix';
+import { UserPermissionsMatrix } from '@/components/admin/UserPermissionsMatrix';
+import { RolesManagement } from '@/components/admin/RolesManagement';
+import { LockedUsersManagement } from '@/components/admin/LockedUsersManagement';
 
 const OverviewDashboard = () => {
   const [statistics, setStatistics] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -82,32 +90,30 @@ const OverviewDashboard = () => {
 
     } else {
       try {
-        const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
-        const response = await fetch('http://localhost:3000/api/admin/export/overview-pdf', {
+        setExporting(true);
+        const response = await fetch(`${API_BASE_URL}/api/admin/export/overview-pdf`, {
           method: 'GET',
-                      headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
+          headers: {
+            'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
+          },
         });
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `system-overview-${new Date().toISOString().split('T')[0]}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        } else {
-          console.error('Failed to export PDF');
-          alert('שגיאה בייצוא הדוח');
-        }
-      } catch (error) {
-        console.error('Error exporting PDF:', error);
-        alert('שגיאה בייצוא הדוח');
+        if (!response.ok) throw new Error('Failed to export PDF');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `system_overview_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (err) {
+        setError('שגיאה בייצוא PDF');
+      } finally {
+        setExporting(false);
       }
     }
   };

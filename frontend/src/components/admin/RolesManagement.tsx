@@ -20,6 +20,7 @@ import {
   Building
 } from 'lucide-react';
 import { AdminService } from '@/services/adminService';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Tenant {
   tenant_id: number;
@@ -66,7 +67,7 @@ const RolesManagement: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/tenants', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/tenants`, {
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
           'Content-Type': 'application/json'

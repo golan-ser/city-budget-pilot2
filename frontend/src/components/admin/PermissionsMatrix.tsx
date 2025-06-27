@@ -20,6 +20,7 @@ import {
   Users,
   Settings
 } from 'lucide-react';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Tenant {
   tenant_id: number;
@@ -93,7 +94,7 @@ const PermissionsMatrix: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/tenants', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/tenants`, {
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
           'Content-Type': 'application/json'
@@ -110,7 +111,7 @@ const PermissionsMatrix: React.FC = () => {
 
   const fetchSystems = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/systems', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/systems`, {
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
           'Content-Type': 'application/json'
@@ -131,7 +132,7 @@ const PermissionsMatrix: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3000/api/admin/permissions/matrix?tenantId=${selectedTenant}&systemId=${selectedSystem}`,
+        `${API_BASE_URL}/api/admin/permissions/matrix?tenantId=${selectedTenant}&systemId=${selectedSystem}`,
         {
           headers: {
             'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
@@ -219,7 +220,7 @@ const PermissionsMatrix: React.FC = () => {
         canExport: permission.can_export
       }));
 
-      const response = await fetch('http://localhost:3000/api/admin/permissions', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/permissions`, {
         method: 'PUT',
         headers: {
           'x-demo-token': 'DEMO_SECURE_TOKEN_2024',
