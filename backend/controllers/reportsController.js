@@ -637,39 +637,89 @@ export const exportReportToExcel = async (req, res) => {
 // Get budget items data
 export const getBudgetItems = async (req, res) => {
   try {
-    console.log('📊 getBudgetItems called');
+    console.log('📊 Starting getBudgetItems...');
     
-    const query = `
-      SELECT 
-        ti.id,
-        ti.budget_item_name as name,
-        COALESCE(t.department, 'לא מוגדר') as department,
-        COALESCE(t.status, 'פעיל') as status,
-        ti.amount as approved_budget,
-        COALESCE(
-          (SELECT SUM(ABS(amount)) 
-           FROM tabar_transactions tt 
-           WHERE tt.item_id = ti.id AND tt.direction = 'חיוב' AND tt.status = 'שולם'), 
-          0
-        ) as executed_budget,
-        t.year as fiscal_year,
-        t.id as tabar_id,
-        ti.created_at,
-        COALESCE(ti.notes, ti.budget_item_code) as notes
-      FROM tabar_items ti
-      LEFT JOIN tabarim t ON ti.tabar_id = t.id
-      ORDER BY ti.created_at DESC
+    // First, let's try a simple query to check what tables exist
+    const tableCheckQuery = `
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name IN ('tabarim', 'tabar_items', 'tabar_transactions', 'budget_items')
+      ORDER BY table_name
     `;
     
-    console.log('📊 Executing query:', query);
+    console.log('🔍 Checking available tables...');
+    const tablesResult = await pool.query(tableCheckQuery);
+    console.log('📋 Available tables:', tablesResult.rows.map(r => r.table_name));
     
-    const result = await pool.query(query);
-    console.log('📊 Query result:', result.rows.length, 'rows');
+    // If tabar_items exists, use it. Otherwise fall back to simple data
+    if (tablesResult.rows.some(r => r.table_name === 'tabar_items')) {
+      console.log('✅ Using tabar_items table...');
+      
+      const query = `
+        SELECT 
+          ti.id,
+          ti.budget_item_name as name,
+          COALESCE(t.department, 'לא מוגדר') as department,
+          COALESCE(t.status, 'פעיל') as status,
+          ti.amount as approved_budget,
+          COALESCE(
+            (SELECT SUM(ABS(amount)) 
+             FROM tabar_transactions tt 
+             WHERE tt.item_id = ti.id AND tt.direction = 'חיוב'), 
+            0
+          ) as executed_budget,
+          t.year as fiscal_year,
+          t.id as tabar_id,
+          ti.created_at,
+          COALESCE(ti.notes, ti.budget_item_code) as notes
+        FROM tabar_items ti
+        LEFT JOIN tabarim t ON ti.tabar_id = t.id
+        ORDER BY ti.created_at DESC
+        LIMIT 50
+      `;
+      
+      console.log('📊 Executing tabar_items query...');
+      const result = await pool.query(query);
+      console.log('📊 Query result:', result.rows.length, 'rows');
+      
+      if (result.rows.length > 0) {
+        res.json(result.rows);
+        return;
+      }
+    }
     
-    res.json(result.rows);
+    // Fallback to basic tabarim data if tabar_items is empty or doesn't exist
+    console.log('📋 Falling back to tabarim table...');
+    const fallbackQuery = `
+      SELECT 
+        id,
+        name,
+        COALESCE(department, 'לא מוגדר') as department,
+        COALESCE(status, 'פעיל') as status,
+        total_authorized as approved_budget,
+        COALESCE(municipal_participation, 0) as executed_budget,
+        year as fiscal_year,
+        id as tabar_id,
+        created_at,
+        COALESCE(additional_funders, permission_number) as notes
+      FROM tabarim
+      ORDER BY created_at DESC
+      LIMIT 50
+    `;
+    
+    const fallbackResult = await pool.query(fallbackQuery);
+    console.log('📊 Fallback result:', fallbackResult.rows.length, 'rows');
+    
+    res.json(fallbackResult.rows);
+    
   } catch (error) {
     console.error('❌ Error fetching budget items:', error);
-    res.status(500).json({ error: 'Failed to fetch budget items', details: error.message });
+    res.status(500).json({ 
+      error: 'Failed to fetch budget items', 
+      details: error.message,
+      stack: error.stack 
+    });
   }
 };
 
