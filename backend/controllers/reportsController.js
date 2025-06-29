@@ -671,11 +671,11 @@ export const getBudgetItems = async (req, res) => {
           ) as executed_budget,
           t.year as fiscal_year,
           t.id as tabar_id,
-          ti.created_at,
+          NOW() as created_at,
           COALESCE(ti.notes, ti.budget_item_code) as notes
         FROM tabar_items ti
         LEFT JOIN tabarim t ON ti.tabar_id = t.id
-        ORDER BY ti.created_at DESC
+        ORDER BY ti.id DESC
         LIMIT 50
       `;
       
@@ -701,10 +701,10 @@ export const getBudgetItems = async (req, res) => {
         COALESCE(municipal_participation, 0) as executed_budget,
         year as fiscal_year,
         id as tabar_id,
-        created_at,
+        NOW() as created_at,
         COALESCE(additional_funders, permission_number) as notes
       FROM tabarim
-      ORDER BY created_at DESC
+      ORDER BY id DESC
       LIMIT 50
     `;
     
