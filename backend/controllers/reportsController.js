@@ -641,19 +641,24 @@ export const getBudgetItems = async (req, res) => {
     
     const query = `
       SELECT 
-        bi.id,
-        bi.name,
-        COALESCE(d.name, 'לא מוגדר') as department,
-        'פעיל' as status,
-        bi.budget as approved_budget,
-        bi.spent as executed_budget,
-        EXTRACT(YEAR FROM bi.updated_at) as fiscal_year,
-        NULL as tabar_id,
-        bi.updated_at as created_at,
-        bi.name as notes
-      FROM budget_items bi
-      LEFT JOIN departments d ON bi.department_id = d.id
-      ORDER BY bi.updated_at DESC
+        ti.id,
+        ti.budget_item_name as name,
+        COALESCE(t.department, 'לא מוגדר') as department,
+        COALESCE(t.status, 'פעיל') as status,
+        ti.amount as approved_budget,
+        COALESCE(
+          (SELECT SUM(ABS(amount)) 
+           FROM tabar_transactions tt 
+           WHERE tt.item_id = ti.id AND tt.direction = 'חיוב' AND tt.status = 'שולם'), 
+          0
+        ) as executed_budget,
+        t.year as fiscal_year,
+        t.id as tabar_id,
+        ti.created_at,
+        COALESCE(ti.notes, ti.budget_item_code) as notes
+      FROM tabar_items ti
+      LEFT JOIN tabarim t ON ti.tabar_id = t.id
+      ORDER BY ti.created_at DESC
     `;
     
     console.log('📊 Executing query:', query);
@@ -675,18 +680,23 @@ export const exportBudgetItemsPDF = async (req, res) => {
     
     let query = `
       SELECT 
-        bi.id,
-        bi.name,
-        COALESCE(d.name, 'לא מוגדר') as department,
-        'פעיל' as status,
-        bi.budget as approved_budget,
-        bi.spent as executed_budget,
-        EXTRACT(YEAR FROM bi.updated_at) as fiscal_year,
-        NULL as tabar_id,
-        bi.updated_at as created_at,
-        bi.name as notes
-      FROM budget_items bi
-      LEFT JOIN departments d ON bi.department_id = d.id
+        ti.id,
+        ti.budget_item_name as name,
+        COALESCE(t.department, 'לא מוגדר') as department,
+        COALESCE(t.status, 'פעיל') as status,
+        ti.amount as approved_budget,
+        COALESCE(
+          (SELECT SUM(ABS(amount)) 
+           FROM tabar_transactions tt 
+           WHERE tt.item_id = ti.id AND tt.direction = 'חיוב' AND tt.status = 'שולם'), 
+          0
+        ) as executed_budget,
+        t.year as fiscal_year,
+        t.id as tabar_id,
+        ti.created_at,
+        COALESCE(ti.notes, ti.budget_item_code) as notes
+      FROM tabar_items ti
+      LEFT JOIN tabarim t ON ti.tabar_id = t.id
       WHERE 1=1
     `;
     
@@ -695,28 +705,30 @@ export const exportBudgetItemsPDF = async (req, res) => {
     
     // Apply filters
     if (filters?.department) {
-      query += ` AND d.name = $${paramIndex}`;
+      query += ` AND t.department = $${paramIndex}`;
       params.push(filters.department);
       paramIndex++;
     }
     
     if (filters?.status) {
-      // All items are active for now, so we don't filter by status
+      query += ` AND t.status = $${paramIndex}`;
+      params.push(filters.status);
+      paramIndex++;
     }
     
     if (filters?.fiscal_year) {
-      query += ` AND EXTRACT(YEAR FROM bi.updated_at) = $${paramIndex}`;
+      query += ` AND t.year = $${paramIndex}`;
       params.push(parseInt(filters.fiscal_year));
       paramIndex++;
     }
     
     if (filters?.search) {
-      query += ` AND (bi.name ILIKE $${paramIndex} OR d.name ILIKE $${paramIndex})`;
+      query += ` AND (ti.budget_item_name ILIKE $${paramIndex} OR t.department ILIKE $${paramIndex} OR t.name ILIKE $${paramIndex})`;
       params.push(`%${filters.search}%`);
       paramIndex++;
     }
     
-    query += ` ORDER BY bi.updated_at DESC`;
+    query += ` ORDER BY ti.created_at DESC`;
     
     const result = await pool.query(query, params);
     const budgetItems = result.rows;
