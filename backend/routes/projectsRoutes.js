@@ -7,7 +7,8 @@ import {
   deleteProject,
   exportProjectPDF,
   getProjectAnalytics,
-  createProjectFromTabar
+  createProjectFromTabar,
+  getProjectMilestones
 } from '../controllers/projectsController.js';
 import {
   getProjectDocuments,
@@ -33,6 +34,9 @@ router.get('/:id/analytics', auth, getProjectAnalytics);
 
 // PDF Export route
 router.get('/:id/export-pdf', auth, exportProjectPDF);
+
+// Milestones route for projects
+router.get('/:id/milestones', auth, getProjectMilestones);
 
 // Document routes for projects
 router.get('/:id/documents', auth, getProjectDocuments);

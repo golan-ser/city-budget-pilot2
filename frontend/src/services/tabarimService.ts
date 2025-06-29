@@ -34,10 +34,13 @@ export class TabarimService {
    */
   static async fetchAll(): Promise<Tabar[]> {
     try {
+      console.log('🔄 TabarimService: Attempting to fetch tabarim...');
       const response = await api.get(API_ENDPOINTS.TABARIM.LIST);
+      console.log('✅ TabarimService: API response received', response);
       return response;
     } catch (error) {
-      console.error('TabarimService.fetchAll error:', error);
+      console.error('❌ TabarimService.fetchAll error:', error);
+      console.log('🎭 Falling back to mock data due to API error');
       // Fallback to basic mock data if API fails
       return this.getMockTabarimData();
     }

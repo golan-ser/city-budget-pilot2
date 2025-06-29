@@ -304,10 +304,29 @@ export const getProjectMilestones = async (req, res) => {
     }
 
     const { id } = req.params;
-    const result = await db.query(
-      'SELECT * FROM milestones WHERE project_id = $1 AND tenant_id = $2 ORDER BY due_date ASC',
-      [id, tenantId]
+    
+    // First, try to find milestones by project_id
+    let result = await db.query(
+      'SELECT * FROM milestones WHERE tabar_number = $1 ORDER BY due_date ASC',
+      [id]
     );
+    
+    // If no results, try to get the tabar_number for this project and search by that
+    if (result.rows.length === 0) {
+      const projectResult = await db.query(
+        'SELECT tabar_id FROM projects WHERE id = $1 AND tenant_id = $2',
+        [id, tenantId]
+      );
+      
+      if (projectResult.rows.length > 0) {
+        const tabarId = projectResult.rows[0].tabar_id;
+        result = await db.query(
+          'SELECT * FROM milestones WHERE tabar_number = $1 ORDER BY due_date ASC',
+          [tabarId]
+        );
+      }
+    }
+    
     res.json(result.rows);
   } catch (error) {
     console.error('❌ Error fetching project milestones:', error);

@@ -10,9 +10,9 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_URL || 'https://impartial-luck-production.up.railway.app',
         changeOrigin: true,
-        secure: false
+        secure: true
       }
     }
   },

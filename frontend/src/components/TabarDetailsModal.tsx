@@ -107,6 +107,7 @@ export default function TabarDetailsModal({ open, onClose, data }: TabarDetailsM
                 tabarId={data.tabar.id} 
                 documents={data.documents}
                 onUploadDocument={handleUploadDocument}
+                isOpen={true}
               />
             )}
           </div>

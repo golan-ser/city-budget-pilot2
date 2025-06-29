@@ -89,6 +89,15 @@ export const api = {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}...`);
+        throw new Error(`Invalid response format: expected JSON, got ${contentType}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error(`GET ${url} failed:`, error);

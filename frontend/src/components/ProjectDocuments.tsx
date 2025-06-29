@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -49,13 +49,15 @@ interface ProjectDocumentsProps {
   onUploadDocument?: (category: string) => void;
   onDocumentsChange?: () => void;
   readonly?: boolean;
+  isOpen?: boolean;
 }
 
 const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ 
   projectId, 
   onUploadDocument,
   onDocumentsChange,
-  readonly = false 
+  readonly = false,
+  isOpen = true
 }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,27 +103,28 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     }
   ];
 
+  // פונקציה לטעינת מסמכים מהשרת
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/api/documents/project/${projectId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
   // טעינת מסמכים מהשרת
   useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`/api/documents/project/${projectId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setDocuments(data);
-        }
-      } catch (error) {
-        console.error('Error fetching documents:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (projectId && isOpen) {
       fetchDocuments();
     }
-  }, [projectId, isOpen]);
+  }, [projectId, isOpen, fetchDocuments]);
 
   // פונקציה חדשה שנגישה מבחוץ לרענון המסמכים
   const refreshDocuments = () => {

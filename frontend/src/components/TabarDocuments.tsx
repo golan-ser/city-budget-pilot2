@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -51,6 +51,7 @@ interface TabarDocumentsProps {
   onUploadDocument?: (category: string) => void;
   onDocumentsChange?: () => void;
   readonly?: boolean;
+  isOpen?: boolean;
 }
 
 const TabarDocuments: React.FC<TabarDocumentsProps> = ({ 
@@ -58,7 +59,8 @@ const TabarDocuments: React.FC<TabarDocumentsProps> = ({
   documents: initialDocuments = [],
   onUploadDocument,
   onDocumentsChange,
-  readonly = false 
+  readonly = false,
+  isOpen = true
 }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,27 +106,28 @@ const TabarDocuments: React.FC<TabarDocumentsProps> = ({
     }
   ];
 
+  // פונקציה לטעינת מסמכים מהשרת
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`${API_ENDPOINTS.TABARIM}/${tabarId}/documents`);
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tabarId]);
+
   // טעינת מסמכים מהשרת
   useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`${API_ENDPOINTS.TABARIM}/${tabarId}/documents`);
-        if (response.ok) {
-          const data = await response.json();
-          setDocuments(data);
-        }
-      } catch (error) {
-        console.error('Error fetching documents:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (tabarId && isOpen) {
-    fetchDocuments();
+      fetchDocuments();
     }
-  }, [tabarId, isOpen]);
+  }, [tabarId, isOpen, fetchDocuments]);
 
   // פונקציה חדשה שנגישה מבחוץ לרענון המסמכים
   const refreshDocuments = () => {

@@ -642,18 +642,18 @@ export const getBudgetItems = async (req, res) => {
     const query = `
       SELECT 
         bi.id,
-        bi.description as name,
-        COALESCE(m.name, 'לא מוגדר') as department,
+        bi.name,
+        COALESCE(d.name, 'לא מוגדר') as department,
         'פעיל' as status,
-        bi.budget_amount as approved_budget,
-        bi.executed_amount as executed_budget,
-        EXTRACT(YEAR FROM bi.created_at) as fiscal_year,
+        bi.budget as approved_budget,
+        bi.spent as executed_budget,
+        EXTRACT(YEAR FROM bi.updated_at) as fiscal_year,
         NULL as tabar_id,
-        bi.created_at,
-        bi.code as notes
+        bi.updated_at as created_at,
+        bi.name as notes
       FROM budget_items bi
-      LEFT JOIN ministries m ON bi.ministry_id = m.id
-      ORDER BY bi.created_at DESC
+      LEFT JOIN departments d ON bi.department_id = d.id
+      ORDER BY bi.updated_at DESC
     `;
     
     console.log('📊 Executing query:', query);
@@ -676,17 +676,17 @@ export const exportBudgetItemsPDF = async (req, res) => {
     let query = `
       SELECT 
         bi.id,
-        bi.description as name,
-        COALESCE(m.name, 'לא מוגדר') as department,
+        bi.name,
+        COALESCE(d.name, 'לא מוגדר') as department,
         'פעיל' as status,
-        bi.budget_amount as approved_budget,
-        bi.executed_amount as executed_budget,
-        EXTRACT(YEAR FROM bi.created_at) as fiscal_year,
+        bi.budget as approved_budget,
+        bi.spent as executed_budget,
+        EXTRACT(YEAR FROM bi.updated_at) as fiscal_year,
         NULL as tabar_id,
-        bi.created_at,
-        bi.code as notes
+        bi.updated_at as created_at,
+        bi.name as notes
       FROM budget_items bi
-      LEFT JOIN ministries m ON bi.ministry_id = m.id
+      LEFT JOIN departments d ON bi.department_id = d.id
       WHERE 1=1
     `;
     
@@ -695,7 +695,7 @@ export const exportBudgetItemsPDF = async (req, res) => {
     
     // Apply filters
     if (filters?.department) {
-      query += ` AND m.name = $${paramIndex}`;
+      query += ` AND d.name = $${paramIndex}`;
       params.push(filters.department);
       paramIndex++;
     }
@@ -705,18 +705,18 @@ export const exportBudgetItemsPDF = async (req, res) => {
     }
     
     if (filters?.fiscal_year) {
-      query += ` AND EXTRACT(YEAR FROM bi.created_at) = $${paramIndex}`;
+      query += ` AND EXTRACT(YEAR FROM bi.updated_at) = $${paramIndex}`;
       params.push(parseInt(filters.fiscal_year));
       paramIndex++;
     }
     
     if (filters?.search) {
-      query += ` AND (bi.description ILIKE $${paramIndex} OR m.name ILIKE $${paramIndex} OR bi.code ILIKE $${paramIndex})`;
+      query += ` AND (bi.name ILIKE $${paramIndex} OR d.name ILIKE $${paramIndex})`;
       params.push(`%${filters.search}%`);
       paramIndex++;
     }
     
-    query += ` ORDER BY bi.created_at DESC`;
+    query += ` ORDER BY bi.updated_at DESC`;
     
     const result = await pool.query(query, params);
     const budgetItems = result.rows;

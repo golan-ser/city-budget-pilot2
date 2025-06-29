@@ -109,7 +109,7 @@ export class ProjectsService {
    */
   static async fetchMilestones(projectId: string): Promise<ProjectMilestone[]> {
     try {
-      const response = await api.get(`${API_ENDPOINTS.MILESTONES}/${projectId}`);
+      const response = await api.get(`${API_ENDPOINTS.PROJECTS}/${projectId}/milestones`);
       return response;
     } catch (error) {
       console.error('ProjectsService.fetchMilestones error:', error);

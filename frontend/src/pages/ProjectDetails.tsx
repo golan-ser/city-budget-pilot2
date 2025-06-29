@@ -27,6 +27,7 @@ import AddExecutionReportModal from '../components/AddExecutionReportModal';
 import ProjectDocuments from '../components/ProjectDocuments';
 import UploadDocumentModal from '../components/UploadDocumentModal';
 import { ProjectsService } from '@/services/projectsService';
+import { API_BASE_URL } from '@/lib/apiConfig';
 
 interface Project {
   id: number;
@@ -148,7 +149,7 @@ const ProjectDetails = () => {
 
         // Fetch execution reports
         try {
-          const reportsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/execution?tabar_number=${id}`, {
+          const reportsResponse = await fetch(`${API_BASE_URL}/api/reports/execution?tabar_number=${id}`, {
             headers: {
               'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
             }
@@ -163,7 +164,7 @@ const ProjectDetails = () => {
 
         // Fetch smart analytics
         try {
-          const analyticsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/analytics`, {
+          const analyticsResponse = await fetch(`${API_BASE_URL}/api/projects/${id}/analytics`, {
             headers: {
               'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
             }
@@ -723,6 +724,7 @@ const ProjectDetails = () => {
             onUploadDocument={openUploadDocumentModal}
             onDocumentsChange={refreshDocuments}
             readonly={false}
+            isOpen={true}
           />
         </TabsContent>
 

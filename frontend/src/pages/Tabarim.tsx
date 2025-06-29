@@ -7,6 +7,7 @@ import pdfLogo from "../assets/PDF.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { TabarimService } from '@/services/tabarimService';
+import { API_BASE_URL } from '@/lib/apiConfig';
 
 
 // טיפוס עזר – אפשר לעדכן בהתאם למבנה שלך
@@ -48,11 +49,14 @@ const Tabarim: React.FC = () => {
 
   const fetchTabarim = async () => {
     try {
+      console.log('📋 Tabarim page: Starting to fetch data...');
       const data = await TabarimService.fetchAll();
       console.log('📋 Tabarim data received:', data);
       
       // Handle case where data might be an object with a data array property
-      const tabarimArray = Array.isArray(data) ? data : (data.data || data.tabarim || []);
+      const tabarimArray = Array.isArray(data) ? data : (Array.isArray((data as any)?.data) ? (data as any).data : Array.isArray((data as any)?.tabarim) ? (data as any).tabarim : []);
+      
+      console.log('📊 Processing tabarim array:', tabarimArray.length, 'items');
       
       setTabarim(
         tabarimArray.map((t: any) => {
@@ -71,8 +75,13 @@ const Tabarim: React.FC = () => {
         })
       );
     } catch (error) {
-      console.error('Error fetching tabarim:', error);
-      // Handle error appropriately
+      console.error('❌ Error fetching tabarim:', error);
+      
+      // Show user-friendly error message
+      alert('שגיאה בטעינת נתוני התב"רים. המערכת עוברת למצב עבודה עם נתונים מקומיים.');
+      
+      // Set empty array or mock data as fallback
+      setTabarim([]);
     }
   };
 
@@ -119,9 +128,10 @@ const Tabarim: React.FC = () => {
       if (year) params.append('year', year);
       if (status) params.append('status', status);
       
-      const response = await fetch(`/api/tabarim/export-pdf?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tabarim/export-pdf?${params.toString()}`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
         }
       });
       

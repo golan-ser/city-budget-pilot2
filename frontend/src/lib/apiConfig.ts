@@ -1,6 +1,13 @@
 // API Configuration - Use Railway deployment URL
 export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'https://impartial-luck-production.up.railway.app';
 
+console.log('🔗 API_BASE_URL configured as:', API_BASE_URL);
+
+// Test server connectivity (only in development)
+if (import.meta.env.MODE === 'development') {
+  console.log('🧪 Development mode - testing API connectivity...');
+}
+
 // API endpoints
 export const API_ENDPOINTS = {
   // Authentication
