@@ -81,15 +81,7 @@ export class ReportsService {
       
       const url = `${API_ENDPOINTS.REPORTS.BUDGET_ITEMS}${params.toString() ? '?' + params.toString() : ''}`;
       
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await api.get(url);
       console.log('✅ Budget items fetched successfully:', data.length, 'items');
       return data;
     } catch (error) {
