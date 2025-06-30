@@ -120,6 +120,8 @@ export default function ReportsManagement() {
 
   // Load data from real API
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const loadData = async () => {
       try {
         setLoading(true);
@@ -127,11 +129,14 @@ export default function ReportsManagement() {
         
         // Load real reports data
         const reportsResponse = await fetch('/api/reports', {
+          signal: abortController.signal,
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         });
+        
+        if (abortController.signal.aborted) return;
         
         if (reportsResponse.ok) {
           const reportsData = await reportsResponse.json();
@@ -156,49 +161,73 @@ export default function ReportsManagement() {
             invoices_count: report.invoices_count || 0
           }));
           
-          setReports(transformedReports);
-          setFilteredReports(transformedReports);
+          if (!abortController.signal.aborted) {
+            setReports(transformedReports);
+            setFilteredReports(transformedReports);
+          }
         } else {
           console.warn('⚠️ Failed to load reports, using fallback data');
-          const fallbackReports = getFallbackReports();
-          setReports(fallbackReports);
-          setFilteredReports(fallbackReports);
+          if (!abortController.signal.aborted) {
+            const fallbackReports = getFallbackReports();
+            setReports(fallbackReports);
+            setFilteredReports(fallbackReports);
+          }
         }
         
         // Load dashboard stats
-        try {
-          const statsResponse = await fetch('/api/reports/dashboard', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
+        if (!abortController.signal.aborted) {
+          try {
+            const statsResponse = await fetch('/api/reports/dashboard', {
+              signal: abortController.signal,
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (abortController.signal.aborted) return;
+            
+            if (statsResponse.ok) {
+              const statsData = await statsResponse.json();
+              if (!abortController.signal.aborted) {
+                setDashboardStats(statsData);
+                console.log('✅ Real dashboard stats loaded');
+              }
+            } else {
+              console.warn('⚠️ Failed to load dashboard stats, using fallback data');
+              if (!abortController.signal.aborted) {
+                setDashboardStats(getFallbackDashboardStats());
+              }
             }
-          });
-          
-          if (statsResponse.ok) {
-            const statsData = await statsResponse.json();
-            setDashboardStats(statsData);
-            console.log('✅ Real dashboard stats loaded');
-          } else {
-            console.warn('⚠️ Failed to load dashboard stats, using fallback data');
-            setDashboardStats(getFallbackDashboardStats());
+          } catch (statsError) {
+            if (!abortController.signal.aborted) {
+              console.warn('⚠️ Dashboard stats error, using fallback:', statsError);
+              setDashboardStats(getFallbackDashboardStats());
+            }
           }
-        } catch (statsError) {
-          console.warn('⚠️ Dashboard stats error, using fallback:', statsError);
-          setDashboardStats(getFallbackDashboardStats());
         }
         
       } catch (error) {
-        console.error('❌ Error loading data, using fallback:', error);
-        const fallbackReports = getFallbackReports();
-        setReports(fallbackReports);
-        setFilteredReports(fallbackReports);
-        setDashboardStats(getFallbackDashboardStats());
+        if (!abortController.signal.aborted) {
+          console.error('❌ Error loading data, using fallback:', error);
+          const fallbackReports = getFallbackReports();
+          setReports(fallbackReports);
+          setFilteredReports(fallbackReports);
+          setDashboardStats(getFallbackDashboardStats());
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     loadData();
+    
+    // Cleanup function to cancel fetch requests
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   // Filter and search logic

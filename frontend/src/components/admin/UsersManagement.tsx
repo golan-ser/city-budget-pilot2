@@ -78,26 +78,38 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Load users data from API
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      console.log('🔄 Loading users for tenant:', selectedTenant);
-      
-      const usersData = await AdminService.fetchUsers(selectedTenant || 1);
-      console.log('📊 Loaded users:', usersData);
-      
-      setUsers(usersData);
-    } catch (error) {
-      console.error('❌ Failed to load users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Load users when component mounts or tenant changes
   useEffect(() => {
+    const abortController = new AbortController();
+    
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        console.log('🔄 Loading users for tenant:', selectedTenant);
+        
+        const usersData = await AdminService.fetchUsers(selectedTenant || 1);
+        
+        if (!abortController.signal.aborted) {
+          console.log('📊 Loaded users:', usersData);
+          setUsers(usersData);
+        }
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          console.error('❌ Failed to load users:', error);
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
     loadUsers();
+    
+    // Cleanup function to cancel operations
+    return () => {
+      abortController.abort();
+    };
   }, [selectedTenant]);
 
   const handleExport = (type: 'excel' | 'pdf') => {

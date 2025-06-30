@@ -98,6 +98,8 @@ export default function BudgetItemsReport() {
 
   // Load data from API
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const loadData = async () => {
       try {
         setLoading(true);
@@ -112,18 +114,30 @@ export default function BudgetItemsReport() {
         
         console.log('📊 Loading budget items with filters:', apiFilters);
         const budgetItems = await ReportsService.fetchBudgetItems(apiFilters);
-        setData(budgetItems);
-        console.log('✅ Budget items loaded:', budgetItems.length, 'items');
+        
+        if (!abortController.signal.aborted) {
+          setData(budgetItems);
+          console.log('✅ Budget items loaded:', budgetItems.length, 'items');
+        }
       } catch (error) {
-        console.error('❌ Error loading budget items:', error);
-        // Use fallback data if API fails
-        setData(getFallbackData());
+        if (!abortController.signal.aborted) {
+          console.error('❌ Error loading budget items:', error);
+          // Use fallback data if API fails
+          setData(getFallbackData());
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     loadData();
+    
+    // Cleanup function to cancel operations
+    return () => {
+      abortController.abort();
+    };
   }, [filters]); // Re-run when filters change
 
   // Calculate utilization percentage
