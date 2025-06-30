@@ -101,7 +101,7 @@ const RolesManagement: React.FC = () => {
     if (!editingRole) return;
 
     try {
-      await AdminService.updateRole(editingRole.role_id, formData);
+      await AdminService.updateRole(editingRole.role_id.toString(), formData);
       await fetchRoles();
       setIsDialogOpen(false);
       setEditingRole(null);
@@ -166,7 +166,7 @@ const RolesManagement: React.FC = () => {
           <CardDescription>בחר רשות כדי לנהל את התפקידים שלה</CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={selectedTenant?.toString()} onValueChange={(value) => setSelectedTenant(parseInt(value))}>
+          <Select value={selectedTenant?.toString() || ""} onValueChange={(value) => setSelectedTenant(value ? parseInt(value) : null)}>
             <SelectTrigger className="max-w-md">
               <SelectValue placeholder="בחר רשות" />
             </SelectTrigger>
