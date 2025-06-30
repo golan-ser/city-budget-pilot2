@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReportsService } from '@/services/reportsService';
@@ -200,9 +201,14 @@ export default function TabarBudgetReport() {
       }
       
       const apiUrl = '';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch(`${apiUrl}/api/reports/tabar-budget/export-pdf?${params.toString()}`, {
         headers: {
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -247,13 +253,13 @@ export default function TabarBudgetReport() {
   useEffect(() => {
     const loadData = async () => {
       try {
-    setLoading(true);
-        const budgetData = await ReportsService.fetchTabarBudget();
-        setData(budgetData);
+        setLoading(true);
+        const budgetReport = await ReportsService.fetchTabarBudget();
+        setData(budgetReport.budgetData || []);
       } catch (error) {
         console.error('Error loading tabar budget:', error);
-        // Fallback to mock data
-        setData(mockData);
+        // Fallback to empty array since we're using real API now
+        setData([]);
       } finally {
         setLoading(false);
       }

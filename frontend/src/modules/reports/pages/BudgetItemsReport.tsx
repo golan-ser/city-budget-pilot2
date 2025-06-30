@@ -318,11 +318,16 @@ export default function BudgetItemsReport() {
   const exportAsPDF = async () => {
     try {
       setExportingPDF(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch('/api/budget-items/export-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-demo-token': 'DEMO_SECURE_TOKEN_2024'
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ filters }),
       });

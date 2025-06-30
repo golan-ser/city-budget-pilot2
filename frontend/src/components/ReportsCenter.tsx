@@ -85,7 +85,11 @@ const ReportsCenter: React.FC = () => {
   const fetchBudgetExecutionReport = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch('/api/reports/budget-execution', {
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +115,11 @@ const ReportsCenter: React.FC = () => {
       if (dateFrom) params.append('date_from', format(dateFrom, 'yyyy-MM-dd'));
       if (dateTo) params.append('date_to', format(dateTo, 'yyyy-MM-dd'));
       
-      const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch(`/api/reports/invoices?${params.toString()}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +140,11 @@ const ReportsCenter: React.FC = () => {
   const fetchMinistryReport = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch('/api/reports/ministry', {
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +165,11 @@ const ReportsCenter: React.FC = () => {
   const fetchCashFlowReport = async (period: string = 'month') => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch(`/api/reports/cash-flow?period=${period}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +189,11 @@ const ReportsCenter: React.FC = () => {
 
   const exportReport = async (reportType: string) => {
     try {
-      const token = localStorage.getItem('token') || 'DEMO_SECURE_TOKEN_2024';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: {
