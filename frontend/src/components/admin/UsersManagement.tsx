@@ -33,6 +33,7 @@ import {
   UserX
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminService } from '@/services/adminService';
 
 // Import existing components
 import RolesManagement from './RolesManagement';
@@ -76,6 +77,28 @@ const UsersListTab = ({ selectedTenant, selectedSystem }: { selectedTenant: numb
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Load users data from API
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Loading users for tenant:', selectedTenant);
+      
+      const usersData = await AdminService.fetchUsers(selectedTenant || 1);
+      console.log('📊 Loaded users:', usersData);
+      
+      setUsers(usersData);
+    } catch (error) {
+      console.error('❌ Failed to load users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load users when component mounts or tenant changes
+  useEffect(() => {
+    loadUsers();
+  }, [selectedTenant]);
 
   const handleExport = (type: 'excel' | 'pdf') => {
     console.log(`Exporting users as ${type} for tenant ${selectedTenant}, system ${selectedSystem}`);

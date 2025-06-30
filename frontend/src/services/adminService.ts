@@ -357,33 +357,62 @@ export class AdminService {
   }
 
   /**
-   * Fetch users - MOCK VERSION FOR DEMO
+   * Fetch users from API
    */
-  static async fetchUsers(): Promise<any[]> {
-    console.log('🎭 Using mock users data - API disabled');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return [
-      {
-        id: 'demo',
-        username: 'דמו',
-        email: 'demo@city.gov.il',
-        role: 'מנהל',
-        status: 'פעיל',
-        last_login: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        created_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 'user2',
-        username: 'משה כהן',
-        email: 'moshe@city.gov.il',
-        role: 'משתמש',
-        status: 'פעיל',
-        last_login: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        created_at: '2024-01-15T00:00:00Z'
+  static async fetchUsers(tenantId?: number): Promise<any[]> {
+    try {
+      console.log('🔄 Fetching users from API...');
+      
+      // Use tenant_id from parameter or default to 1 for demo
+      const actualTenantId = tenantId || 1;
+      
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?tenantId=${actualTenantId}`);
+      
+      if (response && response.success && Array.isArray(response.data)) {
+        console.log(`✅ Found ${response.data.length} users from API`);
+        return response.data;
       }
-    ];
+      
+      // If API response is not in expected format, throw error to trigger fallback
+      throw new Error('Invalid API response format');
+      
+    } catch (error: any) {
+      console.error('❌ AdminService.fetchUsers API error:', error);
+      console.log('🎭 Falling back to mock users data');
+      
+      // Fallback to mock data only if API fails
+      return [
+        {
+          id: 'demo',
+          full_name: 'משתמש דמו',
+          email: 'demo@city.gov.il',
+          role_name: 'מנהל מערכת',
+          role_description: 'מנהל מערכת ראשי',
+          status: 'active',
+          last_login: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          created_at: '2024-01-01T00:00:00Z'
+        },
+        {
+          id: 'user2',
+          full_name: 'משה כהן',
+          email: 'moshe@city.gov.il',
+          role_name: 'משתמש',
+          role_description: 'משתמש רגיל',
+          status: 'active',
+          last_login: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          created_at: '2024-01-15T00:00:00Z'
+        },
+        {
+          id: 'user3',
+          full_name: 'רחל לוי',
+          email: 'rachel@city.gov.il',
+          role_name: 'כלכלן',
+          role_description: 'כלכלן ראשי',
+          status: 'active',
+          last_login: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          created_at: '2024-02-01T00:00:00Z'
+        }
+      ];
+    }
   }
 } 

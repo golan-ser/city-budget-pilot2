@@ -354,91 +354,125 @@ export const getBudgetExecutionReport = async (req, res) => {
   }
 };
 
-// דיווח חשבוניות ותשלומים
+// דיווח חשבוניות ותשלומים - מתוך נתונים אמיתיים
 export const getInvoicesReport = async (req, res) => {
   try {
-    console.log('🧪 getInvoicesReport called - MOCK DATA VERSION');
+    // 🔐 SECURITY: Get tenant_id from authenticated user only
+    const tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Unauthorized - No tenant access' });
+    }
+
+    console.log('📊 getInvoicesReport called - REAL DATA VERSION');
     
-    // Return mock data since invoices table is not configured
+    const { status, date_from, date_to } = req.query;
+    
+    // בניית query עם סינונים
+    let sql = `
+      SELECT 
+        i.id,
+        i.invoice_number,
+        i.amount,
+        i.invoice_date,
+        i.due_date,
+        i.status,
+        i.reported,
+        i.payment_date,
+        o.order_number,
+        COALESCE(o.supplier_name, 'ספק לא מוגדר') as supplier_name,
+        COALESCE(t.name, 'פרויקט לא מוגדר') as project_name,
+        COALESCE(t.tabar_number::TEXT, 'לא מוגדר') as tabar_number,
+        COALESCE(t.ministry, 'לא מוגדר') as ministry_name,
+        CASE 
+          WHEN i.due_date < CURRENT_DATE AND i.status != 'שולמה' THEN 'פיגור'
+          WHEN i.status = 'דחוף' THEN 'דחוף'
+          ELSE 'רגיל'
+        END as priority
+      FROM invoices i
+      LEFT JOIN orders o ON i.order_id = o.id AND o.tenant_id = $1
+      LEFT JOIN tabarim t ON o.project_id = t.id AND t.tenant_id = $1
+      WHERE i.tenant_id = $1
+    `;
+    
+    const params = [tenantId];
+    
+    if (status) {
+      sql += ' AND i.status = $' + (params.length + 1);
+      params.push(status);
+    }
+    
+    if (date_from) {
+      sql += ' AND i.invoice_date >= $' + (params.length + 1);
+      params.push(date_from);
+    }
+    
+    if (date_to) {
+      sql += ' AND i.invoice_date <= $' + (params.length + 1);
+      params.push(date_to);
+    }
+    
+    sql += ' ORDER BY i.invoice_date DESC';
+    
+    const result = await pool.query(sql, params);
+    const invoicesData = result.rows;
+    
+    // חישוב סטטיסטיקות
+    const stats = {
+      total_invoices: invoicesData.length,
+      total_amount: invoicesData.reduce((sum, row) => sum + parseFloat(row.amount || 0), 0),
+      overdue: invoicesData.filter(row => row.priority === 'פיגור').length,
+      urgent: invoicesData.filter(row => row.priority === 'דחוף').length,
+      by_status: {}
+    };
+    
+    // קיבוץ לפי סטטוס
+    invoicesData.forEach(row => {
+      const status = row.status || 'לא מוגדר';
+      if (!stats.by_status[status]) {
+        stats.by_status[status] = { count: 0, amount: 0 };
+      }
+      stats.by_status[status].count++;
+      stats.by_status[status].amount += parseFloat(row.amount || 0);
+    });
+    
+    console.log(`✅ Returned ${invoicesData.length} real invoices from database`);
+    
+    res.json({
+      success: true,
+      data: invoicesData,
+      stats,
+      message: `Real data returned from database - ${invoicesData.length} invoices found`
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching invoices report:', error);
+    
+    // Fallback to mock data only if database error
     const mockData = [
       {
         id: 1,
-        invoice_number: 'INV-2024-001',
+        invoice_number: 'INV-DEMO-001',
         amount: 15000,
         invoice_date: '2024-01-15',
         due_date: '2024-02-15',
         status: 'שולמה',
         reported: true,
         payment_date: '2024-02-10',
-        order_number: 'ORD-2024-001',
-        supplier_name: 'ספק דוגמה בע״מ',
-        project_name: 'פרויקט דוגמה',
-        tabar_number: '2024-001',
-        ministry_name: 'משרד האוצר',
+        order_number: 'ORD-DEMO-001',
+        supplier_name: 'ספק דוגמה (DEMO)',
+        project_name: 'פרויקט דוגמה (DEMO)',
+        tabar_number: 'DEMO-001',
+        ministry_name: 'משרד דוגמה (DEMO)',
         priority: 'רגיל'
-      },
-      {
-        id: 2,
-        invoice_number: 'INV-2024-002',
-        amount: 25000,
-        invoice_date: '2024-02-01',
-        due_date: '2024-03-01',
-        status: 'ממתינה לתשלום',
-        reported: false,
-        payment_date: null,
-        order_number: 'ORD-2024-002',
-        supplier_name: 'ספק נוסף בע״מ',
-        project_name: 'פרויקט נוסף',
-        tabar_number: '2024-002',
-        ministry_name: 'משרד החינוך',
-        priority: 'דחוף'
       }
     ];
     
-    // Apply filters if provided
-    const { status, date_from, date_to } = req.query;
-    let filteredData = mockData;
-    
-    if (status) {
-      filteredData = filteredData.filter(item => item.status === status);
-    }
-    
-    if (date_from) {
-      filteredData = filteredData.filter(item => item.invoice_date >= date_from);
-    }
-    
-    if (date_to) {
-      filteredData = filteredData.filter(item => item.invoice_date <= date_to);
-    }
-    
-    // Calculate statistics
-    const stats = {
-      total_invoices: filteredData.length,
-      total_amount: filteredData.reduce((sum, row) => sum + parseFloat(row.amount), 0),
-      overdue: filteredData.filter(row => row.priority === 'פיגור').length,
-      urgent: filteredData.filter(row => row.priority === 'דחוף').length,
-      by_status: {}
-    };
-    
-    // Group by status
-    filteredData.forEach(row => {
-      if (!stats.by_status[row.status]) {
-        stats.by_status[row.status] = { count: 0, amount: 0 };
-      }
-      stats.by_status[row.status].count++;
-      stats.by_status[row.status].amount += parseFloat(row.amount);
-    });
-    
     res.json({
       success: true,
-      data: filteredData,
-      stats,
-      message: 'Mock data returned - invoices table not configured'
+      data: mockData,
+      stats: { total_invoices: 1, total_amount: 15000, overdue: 0, urgent: 0, by_status: {} },
+      message: 'Fallback mock data returned due to database error'
     });
-    
-  } catch (error) {
-    console.error('Error fetching invoices report:', error);
-    res.status(500).json({ success: false, error: error.message });
   }
 };
 

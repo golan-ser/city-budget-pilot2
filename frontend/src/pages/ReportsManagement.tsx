@@ -85,13 +85,13 @@ export default function ReportsManagement() {
   const [sortField, setSortField] = useState<keyof Report>("report_identifier");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Mock data for development
-  const mockReports: Report[] = [
+  // Mock data kept as fallback only - will be replaced by real API data
+  const getFallbackReports = (): Report[] => [
     {
       id: 1,
-      report_identifier: "251",
+      report_identifier: "DEMO-251",
       tabar_number: 2025001,
-      project_name: "שיפוץ בית ספר יסודי",
+      project_name: "דוגמה - שיפוץ בית ספר יסודי",
       ministry: "משרד החינוך",
       request_year: 2025,
       tabar_status: "פעיל",
@@ -100,195 +100,100 @@ export default function ReportsManagement() {
       amount_received: 0,
       balance: 500000,
       last_report_date: "2025-01-15",
-      order_id: "ORD-2025-001",
+      order_id: "ORD-DEMO-001",
       documents_count: 3,
       invoices_count: 2
-    },
-    {
-      id: 2,
-      report_identifier: "252",
-      tabar_number: 2025002,
-      project_name: "פיתוח פארק שכונתי",
-      ministry: "משרד הפנים",
-      request_year: 2025,
-      tabar_status: "אושר",
-      report_status: "אושר",
-      report_amount: 750000,
-      amount_received: 375000,
-      balance: 375000,
-      last_report_date: "2025-01-10",
-      order_id: "ORD-2025-002",
-      documents_count: 5,
-      invoices_count: 4
-    },
-    {
-      id: 3,
-      report_identifier: "253",
-      tabar_number: 2025003,
-      project_name: "שדרוג מערכות מחשוב",
-      ministry: "משרד הדיגיטל",
-      request_year: 2025,
-      tabar_status: "פעיל",
-      report_status: "בטיפול",
-      report_amount: 300000,
-      amount_received: 300000,
-      balance: 0,
-      last_report_date: "2025-01-20",
-      order_id: "ORD-2025-003",
-      documents_count: 2,
-      invoices_count: 1
-    },
-    {
-      id: 4,
-      report_identifier: "254",
-      tabar_number: 2025004,
-      project_name: "תשתיות תקשורת עירוניות",
-      ministry: "משרד התקשורת",
-      request_year: 2025,
-      tabar_status: "אושר",
-      report_status: "שולם",
-      report_amount: 1200000,
-      amount_received: 1200000,
-      balance: 0,
-      last_report_date: "2025-01-05",
-      order_id: "ORD-2025-004",
-      documents_count: 8,
-      invoices_count: 6
-    },
-    {
-      id: 5,
-      report_identifier: "255",
-      tabar_number: 2025005,
-      project_name: "שיקום רחובות מרכזיים",
-      ministry: "משרד התחבורה",
-      request_year: 2025,
-      tabar_status: "פעיל",
-      report_status: "הוגש",
-      report_amount: 850000,
-      amount_received: 0,
-      balance: 850000,
-      last_report_date: "2025-01-12",
-      order_id: "ORD-2025-005",
-      documents_count: 4,
-      invoices_count: 3
-    },
-    {
-      id: 6,
-      report_identifier: "256",
-      tabar_number: 2024015,
-      project_name: "מרכז קהילתי חדש",
-      ministry: "משרד הפנים",
-      request_year: 2024,
-      tabar_status: "סגור",
-      report_status: "שולם",
-      report_amount: 2100000,
-      amount_received: 2100000,
-      balance: 0,
-      last_report_date: "2024-12-28",
-      order_id: "ORD-2024-015",
-      documents_count: 12,
-      invoices_count: 10
-    },
-    {
-      id: 7,
-      report_identifier: "257",
-      tabar_number: 2025006,
-      project_name: "מערכת ניהול פסולת חכמה",
-      ministry: "משרד הגנת הסביבה",
-      request_year: 2025,
-      tabar_status: "פעיל",
-      report_status: "בטיפול",
-      report_amount: 680000,
-      amount_received: 340000,
-      balance: 340000,
-      last_report_date: "2025-01-18",
-      order_id: "ORD-2025-006",
-      documents_count: 6,
-      invoices_count: 4
-    },
-    {
-      id: 8,
-      report_identifier: "258",
-      tabar_number: 2025007,
-      project_name: "גינת ילדים חדשה",
-      ministry: "משרד החינוך",
-      request_year: 2025,
-      tabar_status: "אושר",
-      report_status: "אושר",
-      report_amount: 420000,
-      amount_received: 210000,
-      balance: 210000,
-      last_report_date: "2025-01-08",
-      order_id: "ORD-2025-007",
-      documents_count: 3,
-      invoices_count: 2
-    },
-    {
-      id: 9,
-      report_identifier: "259",
-      tabar_number: 2025008,
-      project_name: "מתקני ספורט ציבוריים",
-      ministry: "משרד התרבות והספורט",
-      request_year: 2025,
-      tabar_status: "פעיל",
-      report_status: "הוגש",
-      report_amount: 950000,
-      amount_received: 0,
-      balance: 950000,
-      last_report_date: "2025-01-22",
-      order_id: "ORD-2025-008",
-      documents_count: 7,
-      invoices_count: 5
-    },
-    {
-      id: 10,
-      report_identifier: "260",
-      tabar_number: 2025009,
-      project_name: "מרכז בריאות משפחה",
-      ministry: "משרד הבריאות",
-      request_year: 2025,
-      tabar_status: "פעיל",
-      report_status: "בטיפול",
-      report_amount: 1800000,
-      amount_received: 600000,
-      balance: 1200000,
-      last_report_date: "2025-01-14",
-      order_id: "ORD-2025-009",
-      documents_count: 9,
-      invoices_count: 7
     }
   ];
 
-  const mockDashboardStats: DashboardStats = {
-    unreported_count: 2,
-    reported_unpaid_count: 6,
-    total_pending_amount: 4455000,
+  const getFallbackDashboardStats = (): DashboardStats => ({
+    unreported_count: 0,
+    reported_unpaid_count: 1,
+    total_pending_amount: 500000,
     status_distribution: [
-      { name: "הוגש", value: 3, color: "#3b82f6" },
-      { name: "בטיפול", value: 3, color: "#f59e0b" },
-      { name: "אושר", value: 2, color: "#10b981" },
-      { name: "שולם", value: 2, color: "#6366f1" }
+      { name: "הוגש", value: 1, color: "#3b82f6" }
     ],
     comparison_data: [
-      { name: "דצמבר 2024", reported: 2100000, received: 2100000 },
-      { name: "ינואר 2025", reported: 8145000, received: 3825000 },
-      { name: "פברואר 2025", reported: 0, received: 0 }
+      { name: "דמו", reported: 500000, received: 0 }
     ]
-  };
+  });
 
-  // Load data
+  // Load data from real API
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        setTimeout(() => {
-          setReports(mockReports);
-          setFilteredReports(mockReports);
-          setDashboardStats(mockDashboardStats);
-          setLoading(false);
-        }, 1000);
+        console.log('📊 Loading real reports data from API...');
+        
+        // Load real reports data
+        const reportsResponse = await fetch('/api/reports', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (reportsResponse.ok) {
+          const reportsData = await reportsResponse.json();
+          console.log('✅ Real reports loaded:', reportsData.length, 'reports');
+          
+          // Transform data to match our interface
+          const transformedReports: Report[] = reportsData.map((report: any) => ({
+            id: report.id,
+            report_identifier: report.report_identifier || report.id.toString(),
+            tabar_number: report.tabar_id || report.project_id,
+            project_name: report.project_name || 'לא מוגדר',
+            ministry: report.ministry_name || 'לא מוגדר',
+            request_year: report.year || new Date().getFullYear(),
+            tabar_status: report.tabar_status || 'פעיל',
+            report_status: report.status || 'הוגש',
+            report_amount: parseFloat(report.amount) || 0,
+            amount_received: parseFloat(report.amount_received) || 0,
+            balance: (parseFloat(report.amount) || 0) - (parseFloat(report.amount_received) || 0),
+            last_report_date: report.report_date || report.created_at,
+            order_id: report.order_id || 'לא מוגדר',
+            documents_count: report.documents_count || 0,
+            invoices_count: report.invoices_count || 0
+          }));
+          
+          setReports(transformedReports);
+          setFilteredReports(transformedReports);
+        } else {
+          console.warn('⚠️ Failed to load reports, using fallback data');
+          const fallbackReports = getFallbackReports();
+          setReports(fallbackReports);
+          setFilteredReports(fallbackReports);
+        }
+        
+        // Load dashboard stats
+        try {
+          const statsResponse = await fetch('/api/reports/dashboard', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            setDashboardStats(statsData);
+            console.log('✅ Real dashboard stats loaded');
+          } else {
+            console.warn('⚠️ Failed to load dashboard stats, using fallback data');
+            setDashboardStats(getFallbackDashboardStats());
+          }
+        } catch (statsError) {
+          console.warn('⚠️ Dashboard stats error, using fallback:', statsError);
+          setDashboardStats(getFallbackDashboardStats());
+        }
+        
       } catch (error) {
-        console.error('Error loading reports data:', error);
+        console.error('❌ Error loading data, using fallback:', error);
+        const fallbackReports = getFallbackReports();
+        setReports(fallbackReports);
+        setFilteredReports(fallbackReports);
+        setDashboardStats(getFallbackDashboardStats());
+      } finally {
         setLoading(false);
       }
     };

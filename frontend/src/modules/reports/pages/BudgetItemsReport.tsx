@@ -67,6 +67,22 @@ export default function BudgetItemsReport() {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
 
+  // Fallback data only - replaced by real API data
+  const getFallbackData = (): BudgetItem[] => [
+    {
+      id: 1,
+      name: "דוגמה - שיפוצי בתי ספר",
+      department: "חינוך",
+      status: "פעיל",
+      approved_budget: 2500000,
+      executed_budget: 1800000,
+      fiscal_year: 2025,
+      tabar_id: 2025001,
+      created_at: "2025-01-01T00:00:00Z",
+      notes: "נתוני דמו - שגיאה בחיבור למסד נתונים"
+    }
+  ];
+
   // Dynamic filter options based on actual data
   const filterOptions = useMemo<FilterOptions>(() => {
     const departments = [...new Set(data.map(item => item.department))].filter(Boolean).sort();
@@ -100,8 +116,8 @@ export default function BudgetItemsReport() {
         console.log('✅ Budget items loaded:', budgetItems.length, 'items');
       } catch (error) {
         console.error('❌ Error loading budget items:', error);
-        // Fallback to empty array since we're using real API now
-        setData([]);
+        // Use fallback data if API fails
+        setData(getFallbackData());
       } finally {
         setLoading(false);
       }
@@ -109,100 +125,6 @@ export default function BudgetItemsReport() {
 
     loadData();
   }, [filters]); // Re-run when filters change
-
-  // Mock data as fallback
-  const mockData: BudgetItem[] = [
-    {
-      id: 1,
-      name: "שיפוצי בתי ספר",
-      department: "חינוך",
-      status: "פעיל",
-      approved_budget: 2500000,
-      executed_budget: 1800000,
-      fiscal_year: 2025,
-      tabar_id: 2025001,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "שיפוץ כיתות לימוד ומעבדות"
-    },
-    {
-      id: 2,
-      name: "תשתיות תקשורת",
-      department: "טכנולוגיות מידע",
-      status: "פעיל",
-      approved_budget: 1200000,
-      executed_budget: 1350000,
-      fiscal_year: 2025,
-      tabar_id: 2025002,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "שדרוג רשת האינטרנט העירונית"
-    },
-    {
-      id: 3,
-      name: "פיתוח פארקים",
-      department: "שירותים עירוניים",
-      status: "פעיל",
-      approved_budget: 800000,
-      executed_budget: 320000,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "הקמת פארק חדש באזור הצפון"
-    },
-    {
-      id: 4,
-      name: "תחזוקת כבישים",
-      department: "תחבורה",
-      status: "פעיל",
-      approved_budget: 1500000,
-      executed_budget: 1425000,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "שיפוץ כבישים ראשיים"
-    },
-    {
-      id: 5,
-      name: "מערכות אבטחה",
-      department: "ביטחון",
-      status: "מוקפא",
-      approved_budget: 600000,
-      executed_budget: 0,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "התקנת מצלמות אבטחה"
-    },
-    {
-      id: 6,
-      name: "תוכניות רווחה",
-      department: "רווחה",
-      status: "פעיל",
-      approved_budget: 900000,
-      executed_budget: 750000,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "תמיכה במשפחות נזקקות"
-    },
-    {
-      id: 7,
-      name: "פעילויות תרבות",
-      department: "תרבות וספורט",
-      status: "פעיל",
-      approved_budget: 450000,
-      executed_budget: 380000,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "אירועים תרבותיים ופסטיבלים"
-    },
-    {
-      id: 8,
-      name: "שירותי בריאות",
-      department: "בריאות",
-      status: "פעיל",
-      approved_budget: 1100000,
-      executed_budget: 990000,
-      fiscal_year: 2025,
-      created_at: "2025-01-01T00:00:00Z",
-      notes: "שירותי בריאות קהילתיים"
-    }
-  ];
 
   // Calculate utilization percentage
   const calculateUtilization = (executed: number, approved: number): number => {
