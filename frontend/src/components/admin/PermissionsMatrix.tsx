@@ -21,6 +21,7 @@ import {
   Settings
 } from 'lucide-react';
 import { API_BASE_URL } from '../../lib/apiConfig';
+import { AdminService } from '../../services/adminService';
 
 interface Tenant {
   tenant_id: number;
@@ -279,7 +280,10 @@ const PermissionsMatrix: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="text-sm font-medium mb-2 block">רשות</label>
-                <Select value={selectedTenant?.toString()} onValueChange={(value) => setSelectedTenant(parseInt(value))}>
+                <Select 
+                  value={selectedTenant?.toString() || ""} 
+                  onValueChange={(value) => setSelectedTenant(value ? parseInt(value) : null)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="בחר רשות" />
                   </SelectTrigger>
@@ -295,7 +299,10 @@ const PermissionsMatrix: React.FC = () => {
               
               <div>
                 <label className="text-sm font-medium mb-2 block">מערכת</label>
-                <Select value={selectedSystem?.toString()} onValueChange={(value) => setSelectedSystem(parseInt(value))}>
+                <Select 
+                  value={selectedSystem?.toString() || ""} 
+                  onValueChange={(value) => setSelectedSystem(value ? parseInt(value) : null)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="בחר מערכת" />
                   </SelectTrigger>

@@ -382,7 +382,10 @@ const UserPermissionsMatrix: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <label className="text-sm font-medium mb-2 block">רשות</label>
-                <Select value={selectedTenant?.toString()} onValueChange={(value) => setSelectedTenant(parseInt(value))}>
+                <Select 
+                  value={selectedTenant?.toString() || ""} 
+                  onValueChange={(value) => setSelectedTenant(value ? parseInt(value) : null)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="בחר רשות" />
                   </SelectTrigger>
@@ -398,7 +401,10 @@ const UserPermissionsMatrix: React.FC = () => {
               
               <div>
                 <label className="text-sm font-medium mb-2 block">מערכת</label>
-                <Select value={selectedSystem?.toString()} onValueChange={(value) => setSelectedSystem(parseInt(value))}>
+                <Select 
+                  value={selectedSystem?.toString() || ""} 
+                  onValueChange={(value) => setSelectedSystem(value ? parseInt(value) : null)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="בחר מערכת" />
                   </SelectTrigger>
@@ -415,8 +421,8 @@ const UserPermissionsMatrix: React.FC = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">משתמש</label>
                 <Select 
-                  value={selectedUser?.toString()} 
-                  onValueChange={(value) => setSelectedUser(parseInt(value))}
+                  value={selectedUser?.toString() || ""} 
+                  onValueChange={(value) => setSelectedUser(value ? parseInt(value) : null)}
                   disabled={!selectedTenant}
                 >
                   <SelectTrigger>

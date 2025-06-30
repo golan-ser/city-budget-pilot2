@@ -295,7 +295,10 @@ export const UsersManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="tenant">רשות</Label>
-              <Select value={selectedTenant?.toString()} onValueChange={(value) => setSelectedTenant(Number(value))}>
+              <Select 
+                value={selectedTenant?.toString() || ""} 
+                onValueChange={(value) => setSelectedTenant(value ? Number(value) : null)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר רשות" />
                 </SelectTrigger>
@@ -308,9 +311,12 @@ export const UsersManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-                        <div>
+            <div>
               <Label htmlFor="system">מערכת</Label>
-              <Select value={selectedSystem?.toString()} onValueChange={(value) => setSelectedSystem(Number(value))}>
+              <Select 
+                value={selectedSystem?.toString() || ""} 
+                onValueChange={(value) => setSelectedSystem(value ? Number(value) : null)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר מערכת" />
                 </SelectTrigger>
